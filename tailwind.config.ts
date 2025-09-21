@@ -47,6 +47,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        cryptiq: {
+          mint: "hsl(var(--cryptiq-mint))",
+          green: "hsl(var(--cryptiq-green))",
+          dark: "hsl(var(--cryptiq-dark))",
+          muted: "hsl(var(--cryptiq-text-muted))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

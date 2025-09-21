@@ -15,6 +15,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        cryptiq: "bg-cryptiq-dark text-white hover:bg-cryptiq-dark/90 rounded-full",
+        google: "bg-white text-cryptiq-dark border border-gray-200 hover:bg-gray-50 rounded-full",
       },
       size: {
         default: "h-10 px-4 py-2",
