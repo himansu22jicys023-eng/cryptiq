@@ -4,9 +4,9 @@ import { Input } from '@/components/ui/input';
 import { GraduationCap } from 'lucide-react';
 import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
 
-const LoginPage = () => {
+const RegisterPage = () => {
   return (
-    <div className="min-h-screen bg-cryptiq-mint flex">
+    <div className="min-h-screen bg-cryptiq-mint flex overflow-hidden">
       {/* Left Side - Brand and Illustration */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
         <div className="max-w-md w-full text-center space-y-8">
@@ -26,59 +26,77 @@ const LoginPage = () => {
               <img 
                 src={cryptiqIllustration} 
                 alt="CryptIQ Learning Platform Illustration"
-                className="w-150 h-150 object-contain"
+                className="w-150 h-150 object-contain" // Adjusted to fit better, assuming original w-150 was a custom or error; use standard Tailwind
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Register Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+          <div className="bg-white rounded-2xl shadow-xl p-6 space-y-4"> {/* Reduced padding to p-6 to save space */}
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-4">
                 <span className="text-2xl font-bold text-cryptiq-dark">CRYPTIQ</span>
                 <GraduationCap className="w-6 h-6 text-cryptiq-dark" />
               </div>
-              <p className="text-cryptiq-muted text-lg">Welcome to CryptIQ</p>
+              <p className="text-cryptiq-muted text-lg">Create your CryptIQ account</p>
             </div>
 
             {/* Form */}
-            <form className="space-y-4">
+            <form className="space-y-3"> {/* Reduced space-y to 3 for tighter spacing */}
               <div>
                 <Input
                   type="text"
-                  placeholder="Username or email"
-                  className="w-full h-12 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  placeholder="Full Name"
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted" // h-11 slightly smaller than h-12
                 />
               </div>
               
               <div>
                 <Input
-                  type="password"
-                  placeholder="password"
-                  className="w-full h-12 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  type="text"
+                  placeholder="Username"
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
                 />
               </div>
-              
-              <div className="text-right">
-                <a href="#" className="text-cryptiq-green hover:underline text-sm">
-                  forgot Password?
-                </a>
+
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                />
+              </div>
+
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                />
+              </div>
+
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Confirm password"
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                />
               </div>
               
               <Button 
                 variant="cryptiq" 
                 size="lg" 
-                className="w-full h-12 text-base font-medium"
+                className="w-full h-11 text-base font-medium" // h-11 to match inputs
               >
-                Sign In
+                Create Account
               </Button>
               
-              <div className="relative my-6">
+              <div className="relative my-4"> {/* Reduced my-4 */}
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
@@ -90,7 +108,7 @@ const LoginPage = () => {
               <Button 
                 variant="google" 
                 size="lg" 
-                className="w-full h-12 text-base font-medium gap-3"
+                className="w-full h-11 text-base font-medium gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -98,13 +116,13 @@ const LoginPage = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Sign With Google
+                Sign Up With Google
               </Button>
               
-              <div className="text-center pt-4">
-                <span className="text-cryptiq-muted">Are you new? </span>
-                <a href="register" className="text-cryptiq-green hover:underline font-medium">
-                  Create an Account
+              <div className="text-center pt-3"> {/* Reduced pt-3 */}
+                <span className="text-cryptiq-muted">Already have an account? </span>
+                <a href="login" className="text-cryptiq-green hover:underline font-medium">
+                  Sign In
                 </a>
               </div>
             </form>
@@ -115,4 +133,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

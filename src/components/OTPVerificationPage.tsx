@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Shield, CheckCircle } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 
 const OTPVerificationPage = () => {
   const [otp, setOtp] = useState('');
@@ -79,6 +80,7 @@ const OTPVerificationPage = () => {
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-6">
                 <span className="text-2xl font-bold text-cryptiq-dark">CRYPTIQ</span>
+                <GraduationCap className="w-6 h-6 text-cryptiq-dark" />
               </div>
               <h3 className="text-3xl font-bold text-cryptiq-dark mb-4">
                 Check Your Email
