@@ -29,6 +29,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Register form submitted with:', { fullName, username, email, password: '***' });
     
     if (!fullName || !username || !email || !password || !confirmPassword) {
       toast({

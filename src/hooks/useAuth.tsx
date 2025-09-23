@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string, username: string) => {
     try {
+      console.log('SignUp called with:', { email, fullName, username });
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
@@ -71,6 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       
+      console.log('SignUp result:', { error });
+      
       if (!error) {
         toast({
           title: "Check your email!",
@@ -80,18 +83,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error };
     } catch (error) {
+      console.error('SignUp catch error:', error);
       return { error };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('SignIn called with:', { email });
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      console.log('SignIn result:', { error });
       return { error };
     } catch (error) {
+      console.error('SignIn catch error:', error);
       return { error };
     }
   };

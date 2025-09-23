@@ -22,6 +22,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Login form submitted with:', { email, password: '***' });
     if (!email || !password) return;
 
     setLoading(true);
