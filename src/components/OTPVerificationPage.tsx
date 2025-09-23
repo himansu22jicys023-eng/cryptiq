@@ -1,20 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Shield, CheckCircle } from 'lucide-react';
 import { GraduationCap } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 
 const OTPVerificationPage = () => {
   const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+
+  const { resendConfirmation, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Get email from navigation state or redirect if not available
+    const stateEmail = location.state?.email;
+    if (stateEmail) {
+      setEmail(stateEmail);
+    } else if (!user) {
+      navigate('/register');
+    }
+  }, [location.state, navigate, user]);
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleVerify = () => {
-    // Handle OTP verification logic here
-    console.log('Verifying OTP:', otp);
+    if (otp.length !== 6) {
+      toast({
+        title: "Error",
+        description: "Please enter the complete 6-digit code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Verification Complete!",
+      description: "Please check your email and click the confirmation link to complete your registration.",
+    });
+    
+    // Redirect to login after showing the message
+    setTimeout(() => {
+      navigate('/login');
+    }, 3000);
   };
 
-  const handleResendCode = () => {
-    // Handle resend code logic
-    console.log('Resending code...');
+  const handleResendCode = async () => {
+    if (!email) return;
+    
+    setLoading(true);
+    const { error } = await resendConfirmation(email);
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
   };
 
   return (
@@ -86,7 +139,7 @@ const OTPVerificationPage = () => {
                 Check Your Email
               </h3>
               <p className="text-cryptiq-muted text-base">
-                We've sent a 6-digit code to your registered email address.
+                We've sent a confirmation link to {email || 'your registered email address'}.
               </p>
             </div>
 
@@ -131,11 +184,15 @@ const OTPVerificationPage = () => {
               <div className="flex justify-between text-sm">
                 <button 
                   onClick={handleResendCode}
+                  disabled={loading}
+                  className="text-cryptiq-muted hover:text-cryptiq-green hover:underline font-medium disabled:opacity-50"
+                >
+                  {loading ? 'Sending...' : 'Resend Email'}
+                </button>
+                <button 
+                  onClick={() => navigate('/register')}
                   className="text-cryptiq-muted hover:text-cryptiq-green hover:underline font-medium"
                 >
-                  Resend Code
-                </button>
-                <button className="text-cryptiq-muted hover:text-cryptiq-green hover:underline font-medium">
                   Change Email
                 </button>
               </div>
@@ -148,16 +205,19 @@ const OTPVerificationPage = () => {
                 onClick={handleVerify}
                 disabled={otp.length !== 6}
               >
-                VERIFY ACCOUNT
+                I'VE CONFIRMED MY EMAIL
               </Button>
             </div>
 
             {/* Footer */}
             <div className="text-center pt-4">
-              <span className="text-cryptiq-muted">Are you new? </span>
-              <a href="#" className="text-cryptiq-green hover:underline font-medium">
-                Create an Account
-              </a>
+              <span className="text-cryptiq-muted">Already verified? </span>
+              <button 
+                onClick={() => navigate('/login')}
+                className="text-cryptiq-green hover:underline font-medium"
+              >
+                Sign In
+              </button>
             </div>
           </div>
         </div>

@@ -1,10 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
 
 const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { signIn, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      console.error('Login error:', error);
+    }
+    setLoading(false);
+  };
   return (
     <div className="min-h-screen bg-cryptiq-mint flex">
       {/* Left Side - Brand and Illustration */}
@@ -47,35 +74,50 @@ const LoginPage = () => {
             </div>
 
             {/* Form */}
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Input
-                  type="text"
-                  placeholder="Username or email"
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-12 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  required
                 />
               </div>
               
-              <div>
+              <div className="relative">
                 <Input
-                  type="password"
-                  placeholder="password"
-                  className="w-full h-12 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-12 px-4 pr-12 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-cryptiq-muted hover:text-cryptiq-green"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
               
               <div className="text-right">
                 <a href="#" className="text-cryptiq-green hover:underline text-sm">
-                  forgot Password?
+                  Forgot Password?
                 </a>
               </div>
               
               <Button 
+                type="submit"
                 variant="cryptiq" 
                 size="lg" 
                 className="w-full h-12 text-base font-medium"
+                disabled={loading || !email || !password}
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
               
               <div className="relative my-6">
@@ -103,9 +145,13 @@ const LoginPage = () => {
               
               <div className="text-center pt-4">
                 <span className="text-cryptiq-muted">Are you new? </span>
-                <a href="register" className="text-cryptiq-green hover:underline font-medium">
+                <button
+                  type="button"
+                  onClick={() => navigate('/register')}
+                  className="text-cryptiq-green hover:underline font-medium"
+                >
                   Create an Account
-                </a>
+                </button>
               </div>
             </form>
           </div>

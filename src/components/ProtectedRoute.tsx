@@ -1,17 +1,28 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import LoginPage from "../components/LoginPage";
 
-const Index = () => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requireAuth?: boolean; // true for dashboard, false for login/register
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requireAuth = true 
+}) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
+    if (!loading) {
+      if (requireAuth && !user) {
+        navigate('/login');
+      } else if (!requireAuth && user) {
+        navigate('/dashboard');
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, requireAuth, navigate]);
 
   if (loading) {
     return (
@@ -24,7 +35,7 @@ const Index = () => {
     );
   }
 
-  return <LoginPage />;
+  return <>{children}</>;
 };
 
-export default Index;
+export default ProtectedRoute;
