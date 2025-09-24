@@ -1,77 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GraduationCap, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { GraduationCap } from 'lucide-react';
 import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
 
 const RegisterPage = () => {
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  
-  const { signUp, user } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Register form submitted with:', { fullName, username, email, password: '***' });
-    
-    if (!fullName || !username || !email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error", 
-        description: "Passwords do not match.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive", 
-      });
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await signUp(email, password, fullName, username);
-    
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      navigate('/verify-otp', { state: { email } });
-    }
-    setLoading(false);
-  };
   return (
     <div className="min-h-screen bg-cryptiq-mint flex overflow-hidden">
       {/* Left Side - Brand and Illustration */}
@@ -114,15 +47,12 @@ const RegisterPage = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form className="space-y-3"> {/* Reduced space-y to 3 for tighter spacing */}
               <div>
                 <Input
                   type="text"
                   placeholder="Full Name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
-                  required
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted" // h-11 slightly smaller than h-12
                 />
               </div>
               
@@ -130,10 +60,7 @@ const RegisterPage = () => {
                 <Input
                   type="text"
                   placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
-                  required
                 />
               </div>
 
@@ -141,57 +68,32 @@ const RegisterPage = () => {
                 <Input
                   type="email"
                   placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
-                  required
                 />
               </div>
 
-              <div className="relative">
+              <div>
                 <Input
-                  type={showPassword ? 'text' : 'password'}
+                  type="password"
                   placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 px-4 pr-12 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
-                  required
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-cryptiq-muted hover:text-cryptiq-green"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
 
-              <div className="relative">
+              <div>
                 <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type="password"
                   placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 px-4 pr-12 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
-                  required
+                  className="w-full h-11 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-cryptiq-muted hover:text-cryptiq-green"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
               
               <Button 
-                type="submit"
                 variant="cryptiq" 
                 size="lg" 
-                className="w-full h-11 text-base font-medium"
-                disabled={loading}
+                className="w-full h-11 text-base font-medium" // h-11 to match inputs
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                Create Account
               </Button>
               
               <div className="relative my-4"> {/* Reduced my-4 */}
@@ -217,15 +119,11 @@ const RegisterPage = () => {
                 Sign Up With Google
               </Button>
               
-              <div className="text-center pt-3">
+              <div className="text-center pt-3"> {/* Reduced pt-3 */}
                 <span className="text-cryptiq-muted">Already have an account? </span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="text-cryptiq-green hover:underline font-medium"
-                >
+                <a href="login" className="text-cryptiq-green hover:underline font-medium">
                   Sign In
-                </button>
+                </a>
               </div>
             </form>
           </div>
