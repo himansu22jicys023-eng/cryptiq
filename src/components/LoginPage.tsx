@@ -6,16 +6,16 @@ import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
 
 const LoginPage = () => {
   return (
-    <div className="min-h-screen bg-cryptiq-mint flex">
+    <div className="min-h-screen bg-cryptiq-bg-dark flex">
       {/* Left Side - Brand and Illustration */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
         <div className="max-w-md w-full text-center space-y-8">
           {/* Logo and Tagline */}
           <div className="space-y-4">
-            <h1 className="text-6xl font-bold text-cryptiq-dark">
+            <h1 className="text-6xl font-bold text-cryptiq-text-light">
               Crypt<span className="font-normal">IQ</span>
             </h1>
-            <p className="text-xl text-cryptiq-dark font-medium">
+            <p className="text-xl text-cryptiq-text-light font-medium">
               Assess. Practice. Master.
             </p>
           </div>
@@ -36,14 +36,14 @@ const LoginPage = () => {
       {/* Right Side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+          <div className="bg-cryptiq-card-bg rounded-2xl shadow-xl p-8 space-y-6">
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="text-2xl font-bold text-cryptiq-dark">CRYPTIQ</span>
-                <GraduationCap className="w-6 h-6 text-cryptiq-dark" />
+                <span className="text-2xl font-bold text-cryptiq-text-light">CRYPTIQ</span>
+                <GraduationCap className="w-6 h-6 text-cryptiq-text-light" />
               </div>
-              <p className="text-cryptiq-muted text-lg">Welcome to CryptIQ</p>
+              <p className="text-cryptiq-text-muted-dark text-lg">Welcome to CryptIQ</p>
             </div>
 
             {/* Form */}
@@ -52,7 +52,7 @@ const LoginPage = () => {
                 <Input
                   type="text"
                   placeholder="Username or email"
-                  className="w-full h-12 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  className="w-full h-12 px-4 border-0 border-b border-cryptiq-text-muted-dark rounded-none bg-transparent focus:border-cryptiq-accent-blue focus:ring-0 placeholder:text-cryptiq-text-muted-dark text-cryptiq-text-light"
                 />
               </div>
               
@@ -60,12 +60,12 @@ const LoginPage = () => {
                 <Input
                   type="password"
                   placeholder="password"
-                  className="w-full h-12 px-4 border-0 border-b border-gray-300 rounded-none bg-transparent focus:border-cryptiq-green focus:ring-0 placeholder:text-cryptiq-muted"
+                  className="w-full h-12 px-4 border-0 border-b border-cryptiq-text-muted-dark rounded-none bg-transparent focus:border-cryptiq-accent-blue focus:ring-0 placeholder:text-cryptiq-text-muted-dark text-cryptiq-text-light"
                 />
               </div>
               
               <div className="text-right">
-                <a href="#" className="text-cryptiq-green hover:underline text-sm">
+                <a href="#" className="text-cryptiq-accent-blue hover:underline text-sm">
                   forgot Password?
                 </a>
               </div>
@@ -83,7 +83,7 @@ const LoginPage = () => {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-cryptiq-muted">or</span>
+                  <span className="px-4 bg-cryptiq-card-bg text-cryptiq-text-muted-dark">or</span>
                 </div>
               </div>
               
@@ -102,8 +102,8 @@ const LoginPage = () => {
               </Button>
               
               <div className="text-center pt-4">
-                <span className="text-cryptiq-muted">Are you new? </span>
-                <a href="register" className="text-cryptiq-green hover:underline font-medium">
+                <span className="text-cryptiq-text-muted-dark">Are you new? </span>
+                <a href="register" className="text-cryptiq-accent-blue hover:underline font-medium">
                   Create an Account
                 </a>
               </div>
