@@ -18,7 +18,7 @@ const OTPVerificationPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cryptiq-mint flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left Side - Security Illustration */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
         <div className="max-w-md w-full text-center space-y-8">
@@ -27,9 +27,9 @@ const OTPVerificationPage = () => {
             <div className="w-80 h-80 mx-auto rounded-full bg-gradient-to-br from-green-200/50 to-green-300/30 flex items-center justify-center">
               <div className="relative">
                 {/* Person Icon */}
-                <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-4">
-                  <div className="w-16 h-16 bg-cryptiq-dark rounded-full flex items-center justify-center">
-                    <div className="w-8 h-8 bg-white rounded-full"></div>
+                <div className="w-32 h-32 bg-card rounded-full flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 bg-foreground rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-card rounded-full"></div>
                   </div>
                 </div>
                 
@@ -54,20 +54,20 @@ const OTPVerificationPage = () => {
           
           {/* Text Content */}
           <div className="space-y-4">
-            <h2 className="text-4xl font-bold text-cryptiq-dark">
+            <h2 className="text-4xl font-bold text-foreground">
               Your Security Matters
             </h2>
-            <p className="text-lg text-cryptiq-dark/70 font-medium">
+            <p className="text-lg text-muted-foreground font-medium">
               A verification step to protect your account
             </p>
           </div>
           
           {/* Dots Indicator */}
           <div className="flex justify-center space-x-2">
-            <div className="w-2 h-2 bg-cryptiq-dark rounded-full"></div>
-            <div className="w-2 h-2 bg-cryptiq-dark/30 rounded-full"></div>
-            <div className="w-2 h-2 bg-cryptiq-dark/30 rounded-full"></div>
-            <div className="w-2 h-2 bg-cryptiq-dark/30 rounded-full"></div>
+            <div className="w-2 h-2 bg-foreground rounded-full"></div>
+            <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
+            <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
+            <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
           </div>
         </div>
       </div>
@@ -75,17 +75,17 @@ const OTPVerificationPage = () => {
       {/* Right Side - OTP Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+          <div className="bg-card rounded-2xl shadow-xl p-8 space-y-8">
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-6">
-                <span className="text-2xl font-bold text-cryptiq-dark">CRYPTIQ</span>
-                <GraduationCap className="w-6 h-6 text-cryptiq-dark" />
+                <span className="text-2xl font-bold text-foreground">CRYPTIQ</span>
+                <GraduationCap className="w-6 h-6 text-foreground" />
               </div>
-              <h3 className="text-3xl font-bold text-cryptiq-dark mb-4">
+              <h3 className="text-3xl font-bold text-foreground mb-4">
                 Check Your Email
               </h3>
-              <p className="text-cryptiq-muted text-base">
+              <p className="text-muted-foreground text-base">
                 We've sent a 6-digit code to your registered email address.
               </p>
             </div>
@@ -101,27 +101,27 @@ const OTPVerificationPage = () => {
                   <InputOTPGroup className="gap-3">
                     <InputOTPSlot 
                       index={0} 
-                      className="w-14 h-14 text-xl font-semibold border-2 border-gray-200 rounded-lg focus:border-cryptiq-green focus:ring-2 focus:ring-cryptiq-green/20" 
+                      className="w-14 h-14 text-xl font-semibold border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20" 
                     />
                     <InputOTPSlot 
                       index={1} 
-                      className="w-14 h-14 text-xl font-semibold border-2 border-gray-200 rounded-lg focus:border-cryptiq-green focus:ring-2 focus:ring-cryptiq-green/20" 
+                      className="w-14 h-14 text-xl font-semibold border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20" 
                     />
                     <InputOTPSlot 
                       index={2} 
-                      className="w-14 h-14 text-xl font-semibold border-2 border-gray-200 rounded-lg focus:border-cryptiq-green focus:ring-2 focus:ring-cryptiq-green/20" 
+                      className="w-14 h-14 text-xl font-semibold border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20" 
                     />
                     <InputOTPSlot 
                       index={3} 
-                      className="w-14 h-14 text-xl font-semibold border-2 border-gray-200 rounded-lg focus:border-cryptiq-green focus:ring-2 focus:ring-cryptiq-green/20" 
+                      className="w-14 h-14 text-xl font-semibold border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20" 
                     />
                     <InputOTPSlot 
                       index={4} 
-                      className="w-14 h-14 text-xl font-semibold border-2 border-gray-200 rounded-lg focus:border-cryptiq-green focus:ring-2 focus:ring-cryptiq-green/20" 
+                      className="w-14 h-14 text-xl font-semibold border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20" 
                     />
                     <InputOTPSlot 
                       index={5} 
-                      className="w-14 h-14 text-xl font-semibold border-2 border-gray-200 rounded-lg focus:border-cryptiq-green focus:ring-2 focus:ring-cryptiq-green/20" 
+                      className="w-14 h-14 text-xl font-semibold border-2 border-border rounded-lg focus:border-accent focus:ring-2 focus:ring-accent/20" 
                     />
                   </InputOTPGroup>
                 </InputOTP>
@@ -131,20 +131,18 @@ const OTPVerificationPage = () => {
               <div className="flex justify-between text-sm">
                 <button 
                   onClick={handleResendCode}
-                  className="text-cryptiq-muted hover:text-cryptiq-green hover:underline font-medium"
+                  className="text-muted-foreground hover:text-accent hover:underline font-medium"
                 >
                   Resend Code
                 </button>
-                <button className="text-cryptiq-muted hover:text-cryptiq-green hover:underline font-medium">
+                <button className="text-muted-foreground hover:text-accent hover:underline font-medium">
                   Change Email
                 </button>
               </div>
 
               {/* Verify Button */}
               <Button 
-                variant="cryptiq" 
-                size="lg" 
-                className="w-full h-12 text-base font-medium"
+                className="w-full h-12 text-base font-medium bg-accent hover:bg-accent/90 text-accent-foreground"
                 onClick={handleVerify}
                 disabled={otp.length !== 6}
               >
@@ -154,8 +152,8 @@ const OTPVerificationPage = () => {
 
             {/* Footer */}
             <div className="text-center pt-4">
-              <span className="text-cryptiq-muted">Are you new? </span>
-              <a href="#" className="text-cryptiq-green hover:underline font-medium">
+              <span className="text-muted-foreground">Are you new? </span>
+              <a href="#" className="text-accent hover:underline font-medium">
                 Create an Account
               </a>
             </div>
