@@ -1,21 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GraduationCap } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
 
 const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast.error(error.message || 'Failed to sign in');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cryptiq-bg-dark flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left Side - Brand and Illustration */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
         <div className="max-w-md w-full text-center space-y-8">
           {/* Logo and Tagline */}
           <div className="space-y-4">
-            <h1 className="text-6xl font-bold text-cryptiq-text-light">
+            <h1 className="text-6xl font-bold text-foreground">
               Crypt<span className="font-normal">IQ</span>
             </h1>
-            <p className="text-xl text-cryptiq-text-light font-medium">
+            <p className="text-xl text-foreground font-medium">
               Assess. Practice. Master.
             </p>
           </div>
@@ -36,60 +65,67 @@ const LoginPage = () => {
       {/* Right Side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <div className="bg-cryptiq-card-bg rounded-2xl shadow-xl p-8 space-y-6">
+          <div className="bg-card rounded-2xl shadow-xl p-8 space-y-6">
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="text-2xl font-bold text-cryptiq-text-light">CRYPTIQ</span>
-                <GraduationCap className="w-6 h-6 text-cryptiq-text-light" />
+                <span className="text-2xl font-bold text-foreground">CRYPTIQ</span>
+                <GraduationCap className="w-6 h-6 text-foreground" />
               </div>
-              <p className="text-cryptiq-text-muted-dark text-lg">Welcome to CryptIQ</p>
+              <p className="text-muted-foreground text-lg">Welcome to CryptIQ</p>
             </div>
 
             {/* Form */}
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Input
-                  type="text"
-                  placeholder="Username or email"
-                  className="w-full h-12 px-4 border-0 border-b border-cryptiq-text-muted-dark rounded-none bg-transparent focus:border-cryptiq-accent-blue focus:ring-0 placeholder:text-cryptiq-text-muted-dark text-cryptiq-text-light"
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-12 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  required
                 />
               </div>
               
               <div>
                 <Input
                   type="password"
-                  placeholder="password"
-                  className="w-full h-12 px-4 border-0 border-b border-cryptiq-text-muted-dark rounded-none bg-transparent focus:border-cryptiq-accent-blue focus:ring-0 placeholder:text-cryptiq-text-muted-dark text-cryptiq-text-light"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-12 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  required
                 />
               </div>
               
               <div className="text-right">
-                <a href="#" className="text-cryptiq-accent-blue hover:underline text-sm">
-                  forgot Password?
+                <a href="#" className="text-accent hover:underline text-sm">
+                  Forgot Password?
                 </a>
               </div>
               
               <Button 
-                variant="cryptiq" 
-                size="lg" 
-                className="w-full h-12 text-base font-medium"
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 text-base font-medium bg-accent hover:bg-accent/90 text-accent-foreground"
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </Button>
               
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t border-border"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-cryptiq-card-bg text-cryptiq-text-muted-dark">or</span>
+                  <span className="px-4 bg-card text-muted-foreground">or</span>
                 </div>
               </div>
               
               <Button 
-                variant="google" 
-                size="lg" 
+                type="button"
+                variant="outline"
+                disabled={loading}
                 className="w-full h-12 text-base font-medium gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -102,10 +138,10 @@ const LoginPage = () => {
               </Button>
               
               <div className="text-center pt-4">
-                <span className="text-cryptiq-text-muted-dark">Are you new? </span>
-                <a href="register" className="text-cryptiq-accent-blue hover:underline font-medium">
+                <span className="text-muted-foreground">Are you new? </span>
+                <Link to="/register" className="text-accent hover:underline font-medium">
                   Create an Account
-                </a>
+                </Link>
               </div>
             </form>
           </div>
