@@ -37,7 +37,7 @@ const LoginPage = () => {
   return (
     <div className="dark min-h-screen bg-background flex">
       {/* Left Side - Brand and Illustration */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16 bg-card/30">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
         <div className="max-w-md w-full text-center space-y-8">
           {/* Logo and Tagline */}
           <div className="space-y-4">
@@ -51,7 +51,7 @@ const LoginPage = () => {
           
           {/* Illustration */}
           <div className="relative">
-            <div className="w-80 h-80 mx-auto rounded-2xl bg-card flex items-center justify-center">
+            <div className="w-80 h-80 mx-auto rounded-full bg-card flex items-center justify-center">
               <img 
                 src={cryptiqIllustration} 
                 alt="CryptIQ Learning Platform Illustration"
@@ -124,9 +124,8 @@ const LoginPage = () => {
               
               <Button 
                 type="button"
-                variant="outline"
                 disabled={loading}
-                className="w-full h-12 text-base font-medium gap-3"
+                className="w-full h-12 text-base font-medium bg-accent hover:bg-accent/90 text-accent-foreground gap-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
