@@ -48,7 +48,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex overflow-hidden">
+    <div className="dark min-h-screen bg-background flex overflow-hidden">
       {/* Left Side - Brand and Illustration */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16 bg-card/30">
         <div className="max-w-md w-full text-center space-y-8">
