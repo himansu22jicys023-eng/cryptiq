@@ -100,17 +100,6 @@ const RegisterPage = () => {
                   required
                 />
               </div>
-              
-              <div>
-                <Input
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b-2 border-muted-foreground/30 rounded-none bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
-                  required
-                />
-              </div>
 
               <div>
                 <Input
