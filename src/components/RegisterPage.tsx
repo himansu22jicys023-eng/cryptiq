@@ -50,25 +50,25 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen bg-background flex overflow-hidden">
       {/* Left Side - Brand and Illustration */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16 bg-card/30">
         <div className="max-w-md w-full text-center space-y-8">
           {/* Logo and Tagline */}
           <div className="space-y-4">
             <h1 className="text-6xl font-bold text-foreground">
               Crypt<span className="font-normal">IQ</span>
             </h1>
-            <p className="text-xl text-foreground font-medium">
+            <p className="text-xl text-muted-foreground font-medium">
               Assess. Practice. Master.
             </p>
           </div>
           
           {/* Illustration */}
           <div className="relative">
-            <div className="w-80 h-80 mx-auto rounded-full bg-gradient-to-br from-green-200/50 to-green-300/30 flex items-center justify-center">
+            <div className="w-80 h-80 mx-auto rounded-2xl bg-card flex items-center justify-center">
               <img 
                 src={cryptiqIllustration} 
                 alt="CryptIQ Learning Platform Illustration"
-                className="w-150 h-150 object-contain" // Adjusted to fit better, assuming original w-150 was a custom or error; use standard Tailwind
+                className="w-64 h-64 object-contain"
               />
             </div>
           </div>
@@ -83,9 +83,9 @@ const RegisterPage = () => {
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-4">
                 <span className="text-2xl font-bold text-foreground">CRYPTIQ</span>
-                <GraduationCap className="w-6 h-6 text-foreground" />
+                <GraduationCap className="w-6 h-6 text-accent" />
               </div>
-              <p className="text-muted-foreground text-lg">Create your CryptIQ account</p>
+              <p className="text-muted-foreground text-lg">Create your account</p>
             </div>
 
             {/* Form */}
