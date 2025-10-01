@@ -1,4 +1,4 @@
-import { Home, BookOpen, FlaskConical, Trophy } from "lucide-react";
+import { Home, BookOpen, FlaskConical, Trophy, GraduationCap } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -31,10 +31,9 @@ export function AppSidebar() {
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground text-sm font-bold">C</span>
-            </div>
+            
             <span className="text-sidebar-foreground font-bold text-lg">CryptIQ</span>
+            <GraduationCap className="w-6 h-6 text-accent" />
           </div>
         </div>
 
