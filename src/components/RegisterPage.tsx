@@ -96,7 +96,7 @@ const RegisterPage = () => {
                   placeholder="Full Name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-11 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>
@@ -107,7 +107,7 @@ const RegisterPage = () => {
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-11 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>
@@ -118,7 +118,7 @@ const RegisterPage = () => {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-11 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>
@@ -129,7 +129,7 @@ const RegisterPage = () => {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-11 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>
@@ -140,7 +140,7 @@ const RegisterPage = () => {
                   placeholder="Confirm password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-11 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>

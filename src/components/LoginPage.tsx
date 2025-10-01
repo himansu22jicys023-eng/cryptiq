@@ -83,7 +83,7 @@ const LoginPage = () => {
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-12 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>
@@ -94,7 +94,7 @@ const LoginPage = () => {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 px-4 border-0 border-b border-border rounded-none bg-transparent focus:border-accent focus:ring-0 placeholder:text-muted-foreground text-foreground"
+                  className="w-full h-12 px-4 border-2 border-border rounded-lg bg-transparent focus:border-accent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground transition-colors"
                   required
                 />
               </div>
