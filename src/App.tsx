@@ -11,6 +11,9 @@ import RegisterPage from "./components/RegisterPage";
 import LoginPage from "./components/LoginPage";
 import DashboardLayout from "./pages/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
+import Quiz from "./pages/Quiz";
+import Labs from "./pages/Labs";
+import Rewards from "./pages/Rewards";
 
 
 const queryClient = new QueryClient();
@@ -31,13 +34,13 @@ const App = () => (
               <Route index element={<Dashboard />} />
             </Route>
             <Route path="/quiz" element={<DashboardLayout />}>
-              <Route index element={<div className="text-foreground">Quiz page coming soon...</div>} />
+              <Route index element={<Quiz />} />
             </Route>
             <Route path="/labs" element={<DashboardLayout />}>
-              <Route index element={<div className="text-foreground">Labs page coming soon...</div>} />
+              <Route index element={<Labs />} />
             </Route>
             <Route path="/rewards" element={<DashboardLayout />}>
-              <Route index element={<div className="text-foreground">Rewards page coming soon...</div>} />
+              <Route index element={<Rewards />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
