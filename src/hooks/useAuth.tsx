@@ -43,10 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Auto-redirect to dashboard if authenticated
+  // Auto-redirect to dashboard only from auth pages
   useEffect(() => {
     if (user && !loading) {
-      navigate('/dashboard');
+      const currentPath = window.location.pathname;
+      if (currentPath === '/' || currentPath === '/login' || currentPath === '/register' || currentPath === '/verify-otp') {
+        navigate('/dashboard');
+      }
     }
   }, [user, loading, navigate]);
 
