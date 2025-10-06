@@ -32,15 +32,9 @@ const App = () => (
             <Route path="/verify-otp" element={<OTPVerificationPage />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
-            </Route>
-            <Route path="/quiz" element={<DashboardLayout />}>
-              <Route index element={<Quiz />} />
-            </Route>
-            <Route path="/labs" element={<DashboardLayout />}>
-              <Route index element={<Labs />} />
-            </Route>
-            <Route path="/rewards" element={<DashboardLayout />}>
-              <Route index element={<Rewards />} />
+              <Route path="quiz" element={<Quiz />} />
+              <Route path="labs" element={<Labs />} />
+              <Route path="rewards" element={<Rewards />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

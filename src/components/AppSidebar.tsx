@@ -12,9 +12,9 @@ import {
 
 const items = [
   { title: "Home", url: "/dashboard", icon: Home },
-  { title: "Quiz", url: "/quiz", icon: BookOpen },
-  { title: "Labs", url: "/labs", icon: FlaskConical },
-  { title: "Rewards", url: "/rewards", icon: Trophy },
+  { title: "Quiz", url: "/dashboard/quiz", icon: BookOpen },
+  { title: "Labs", url: "/dashboard/labs", icon: FlaskConical },
+  { title: "Rewards", url: "/dashboard/rewards", icon: Trophy },
 ];
 
 export function AppSidebar() {
