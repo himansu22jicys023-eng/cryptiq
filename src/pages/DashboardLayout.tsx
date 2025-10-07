@@ -25,7 +25,7 @@ export default function DashboardLayout() {
                   variant="outline"
                   size="sm"
                   onClick={signOut}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 hover:bg-transparent hover:border-border"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out

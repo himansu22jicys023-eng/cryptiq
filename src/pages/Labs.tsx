@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Clock, Award, CheckCircle, Lock, Code, Zap } from 'lucide-react';
+import { FlaskConical, Clock, Award, CheckCircle, Lock, Code, Zap, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { LabModal } from '@/components/LabModal';
+import { labTasksData } from '@/data/labTasks';
+import { useToast } from '@/hooks/use-toast';
 
 const labs = [
   {
@@ -78,6 +81,10 @@ const labs = [
 ];
 
 const Labs = () => {
+  const [selectedLab, setSelectedLab] = useState<number | null>(null);
+  const [completedLabs, setCompletedLabs] = useState<number[]>([1, 2, 3]);
+  const { toast } = useToast();
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Beginner':
@@ -91,51 +98,87 @@ const Labs = () => {
     }
   };
 
-  const completedLabs = labs.filter(lab => lab.completed).length;
-  const totalXP = labs.filter(lab => lab.completed).reduce((sum, lab) => sum + lab.xp, 0);
+  const handleLabComplete = (labId: number) => {
+    setCompletedLabs(prev => [...prev, labId]);
+    toast({
+      title: "Lab Completed! 🎉",
+      description: `You've earned ${labs.find(l => l.id === labId)?.xp} XP!`,
+    });
+  };
+
+  const handleStartLab = (labId: number, locked: boolean) => {
+    if (locked) {
+      toast({
+        title: "Lab Locked",
+        description: "Complete previous labs to unlock this one.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setSelectedLab(labId);
+  };
+
+  const completedCount = completedLabs.length;
+  const totalXP = completedLabs.reduce((sum, labId) => {
+    const lab = labs.find(l => l.id === labId);
+    return sum + (lab?.xp || 0);
+  }, 0);
+
+  const selectedLabData = labs.find(l => l.id === selectedLab);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Practical Labs</h1>
-          <p className="text-muted-foreground mt-1">Hands-on experience with blockchain technology</p>
-        </div>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold text-foreground">Practical Labs 🧪</h1>
+        <p className="text-muted-foreground text-lg">
+          Hands-on experience with blockchain technology
+        </p>
       </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-accent text-accent-foreground rounded-2xl">
+        <Card className="border-2">
           <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <FlaskConical className="w-8 h-8" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FlaskConical className="w-6 h-6 text-primary" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Labs Completed</p>
-                <p className="text-2xl font-bold">{completedLabs}/{labs.length}</p>
+                <p className="text-sm text-muted-foreground">Labs Completed</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {completedCount}/{labs.length}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-accent text-accent-foreground rounded-2xl">
+        <Card className="border-2">
           <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <Award className="w-8 h-8" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Award className="w-6 h-6 text-accent" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Total XP</p>
-                <p className="text-2xl font-bold">{totalXP} XP</p>
+                <p className="text-sm text-muted-foreground">Total XP</p>
+                <p className="text-2xl font-bold text-foreground">{totalXP}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-accent text-accent-foreground rounded-2xl">
+        <Card className="border-2">
           <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <Zap className="w-8 h-8" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <Target className="w-6 h-6 text-green-500" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Completion Rate</p>
-                <p className="text-2xl font-bold">{Math.round((completedLabs / labs.length) * 100)}%</p>
+                <p className="text-sm text-muted-foreground">Completion</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Math.round((completedCount / labs.length) * 100)}%
+                </p>
               </div>
             </div>
           </CardContent>
@@ -144,73 +187,98 @@ const Labs = () => {
 
       {/* Labs Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {labs.map((lab) => (
-          <Card key={lab.id} className="bg-card rounded-2xl hover:bg-card/80 transition-colors">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center">
-                    <Code className="w-6 h-6 text-accent-foreground" />
+        {labs.map((lab) => {
+          const isCompleted = completedLabs.includes(lab.id);
+          
+          return (
+            <Card 
+              key={lab.id} 
+              className="border-2 hover:border-primary/50 transition-all group"
+            >
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Code className="w-7 h-7 text-primary" />
+                    </div>
+                    {isCompleted && (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    )}
+                    {lab.locked && (
+                      <Lock className="w-6 h-6 text-muted-foreground" />
+                    )}
                   </div>
-                  {lab.completed && (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  )}
-                  {lab.locked && (
-                    <Lock className="w-5 h-5 text-muted-foreground" />
-                  )}
+                  <Badge className={getDifficultyColor(lab.difficulty)}>
+                    {lab.difficulty}
+                  </Badge>
                 </div>
-                <Badge className={getDifficultyColor(lab.difficulty)}>
-                  {lab.difficulty}
-                </Badge>
-              </div>
 
-              <h3 className="text-xl font-bold text-foreground mb-2">{lab.title}</h3>
-              <p className="text-muted-foreground text-sm mb-4">{lab.description}</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {lab.title}
+                </h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  {lab.description}
+                </p>
 
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                <div className="flex items-center gap-1">
-                  <FlaskConical className="w-4 h-4" />
-                  <span>{lab.tasks} tasks</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{lab.duration}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Award className="w-4 h-4" />
-                  <span>{lab.xp} XP</span>
-                </div>
-              </div>
-
-              {!lab.completed && !lab.locked && (
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="text-foreground font-medium">{lab.progress}%</span>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <FlaskConical className="w-4 h-4" />
+                    <span>{lab.tasks} tasks</span>
                   </div>
-                  <Progress value={lab.progress} className="h-2" />
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    <span>{lab.duration}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-primary" />
+                    <span className="text-primary font-medium">{lab.xp} XP</span>
+                  </div>
                 </div>
-              )}
 
-              {lab.completed && (
-                <div className="mb-4 p-3 bg-green-500/20 rounded-lg">
-                  <p className="text-sm text-green-400 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="font-medium">Lab Completed!</span>
-                  </p>
-                </div>
-              )}
+                {isCompleted && (
+                  <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="text-sm text-green-500 flex items-center gap-2 font-medium">
+                      <CheckCircle className="w-4 h-4" />
+                      Lab Completed!
+                    </p>
+                  </div>
+                )}
 
-              <Button 
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                disabled={lab.locked}
-              >
-                {lab.locked ? 'Locked' : lab.completed ? 'Review Lab' : lab.progress > 0 ? 'Continue Lab' : 'Start Lab'}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                <Button 
+                  onClick={() => handleStartLab(lab.id, lab.locked || false)}
+                  disabled={lab.locked}
+                  className="w-full"
+                  size="lg"
+                >
+                  {lab.locked ? (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />
+                      Locked
+                    </>
+                  ) : isCompleted ? (
+                    'Review Lab'
+                  ) : (
+                    'Start Lab'
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Lab Modal */}
+      {selectedLabData && selectedLab && (
+        <LabModal
+          open={selectedLab !== null}
+          onOpenChange={(open) => !open && setSelectedLab(null)}
+          labTitle={selectedLabData.title}
+          labDescription={selectedLabData.description}
+          tasks={labTasksData[selectedLab as keyof typeof labTasksData] || []}
+          xpReward={selectedLabData.xp}
+          onComplete={() => handleLabComplete(selectedLab!)}
+        />
+      )}
     </div>
   );
 };
