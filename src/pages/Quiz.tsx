@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Clock, Award, CheckCircle, Lock } from 'lucide-react';
+import { BookOpen, Clock, Award, CheckCircle, Lock, TrendingUp, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { QuizModal } from '@/components/QuizModal';
+import { quizData } from '@/data/quizQuestions';
+import { useToast } from '@/hooks/use-toast';
 
 const quizzes = [
   {
@@ -74,6 +77,15 @@ const quizzes = [
 ];
 
 const Quiz = () => {
+  const [selectedQuiz, setSelectedQuiz] = useState<number | null>(null);
+  const [quizScores, setQuizScores] = useState<Record<number, number>>({
+    1: 90,
+    2: 85,
+    3: 75,
+    4: 80
+  });
+  const { toast } = useToast();
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Beginner':
@@ -87,83 +99,189 @@ const Quiz = () => {
     }
   };
 
+  const handleQuizComplete = (quizId: number, score: number) => {
+    setQuizScores(prev => ({ ...prev, [quizId]: score }));
+    
+    toast({
+      title: "Quiz Completed!",
+      description: `You scored ${score}%. Great job! 🎉`,
+    });
+  };
+
+  const handleStartQuiz = (quizId: number, locked: boolean) => {
+    if (locked) {
+      toast({
+        title: "Quiz Locked",
+        description: "Complete previous quizzes to unlock this one.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setSelectedQuiz(quizId);
+  };
+
+  const totalXP = Object.values(quizScores).reduce((acc, score) => {
+    return acc + Math.round((score / 100) * 100);
+  }, 0);
+
+  const selectedQuizData = quizzes.find(q => q.id === selectedQuiz);
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Quiz Arena</h1>
-          <p className="text-muted-foreground mt-1">Test your crypto knowledge and earn XP</p>
-        </div>
-        <Card className="bg-accent text-accent-foreground rounded-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold text-foreground">Quiz Arena 🎯</h1>
+        <p className="text-muted-foreground text-lg">
+          Test your crypto knowledge and earn XP
+        </p>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-2">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Award className="w-6 h-6 text-primary" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Total XP Earned</p>
-                <p className="text-2xl font-bold">430 XP</p>
+                <p className="text-sm text-muted-foreground">Total XP</p>
+                <p className="text-2xl font-bold text-foreground">{totalXP}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                <Target className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Completed</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Object.keys(quizScores).length}/{quizzes.length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-2">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Avg Score</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Object.keys(quizScores).length > 0
+                    ? Math.round(
+                        Object.values(quizScores).reduce((a, b) => a + b, 0) /
+                          Object.keys(quizScores).length
+                      )
+                    : 0}%
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Quiz Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {quizzes.map((quiz) => (
-          <Card key={quiz.id} className="bg-card rounded-2xl hover:bg-card/80 transition-colors">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-accent-foreground" />
+        {quizzes.map((quiz) => {
+          const userScore = quizScores[quiz.id];
+          const isCompleted = userScore !== undefined;
+
+          return (
+            <Card 
+              key={quiz.id} 
+              className="border-2 hover:border-primary/50 transition-all group"
+            >
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <BookOpen className="w-7 h-7 text-primary" />
+                    </div>
+                    {isCompleted && (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    )}
+                    {quiz.locked && (
+                      <Lock className="w-6 h-6 text-muted-foreground" />
+                    )}
                   </div>
-                  {quiz.completed && (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  <Badge className={getDifficultyColor(quiz.difficulty)}>
+                    {quiz.difficulty}
+                  </Badge>
+                </div>
+
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {quiz.title}
+                </h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  {quiz.description}
+                </p>
+
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4" />
+                    <span>{quiz.questions} Qs</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    <span>{quiz.duration}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-primary" />
+                    <span className="text-primary font-medium">{quiz.xp} XP</span>
+                  </div>
+                </div>
+
+                {isCompleted && (
+                  <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-foreground">Best Score:</p>
+                      <p className="text-lg font-bold text-green-500">{userScore}%</p>
+                    </div>
+                  </div>
+                )}
+
+                <Button 
+                  onClick={() => handleStartQuiz(quiz.id, quiz.locked || false)}
+                  disabled={quiz.locked}
+                  className="w-full"
+                  size="lg"
+                >
+                  {quiz.locked ? (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />
+                      Locked
+                    </>
+                  ) : isCompleted ? (
+                    'Retake Quiz'
+                  ) : (
+                    'Start Quiz'
                   )}
-                  {quiz.locked && (
-                    <Lock className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
-                <Badge className={getDifficultyColor(quiz.difficulty)}>
-                  {quiz.difficulty}
-                </Badge>
-              </div>
-
-              <h3 className="text-xl font-bold text-foreground mb-2">{quiz.title}</h3>
-              <p className="text-muted-foreground text-sm mb-4">{quiz.description}</p>
-
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                <div className="flex items-center gap-1">
-                  <BookOpen className="w-4 h-4" />
-                  <span>{quiz.questions} questions</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{quiz.duration}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Award className="w-4 h-4" />
-                  <span>{quiz.xp} XP</span>
-                </div>
-              </div>
-
-              {quiz.completed && quiz.score && (
-                <div className="mb-4 p-3 bg-accent/20 rounded-lg">
-                  <p className="text-sm text-foreground">
-                    Your Score: <span className="font-bold">{quiz.score}%</span>
-                  </p>
-                </div>
-              )}
-
-              <Button 
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                disabled={quiz.locked}
-              >
-                {quiz.locked ? 'Locked' : quiz.completed ? 'Retake Quiz' : 'Start Quiz'}
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Quiz Modal */}
+      {selectedQuizData && (
+        <QuizModal
+          open={selectedQuiz !== null}
+          onOpenChange={(open) => !open && setSelectedQuiz(null)}
+          quizTitle={selectedQuizData.title}
+          questions={quizData[selectedQuiz as keyof typeof quizData] || []}
+          xpReward={selectedQuizData.xp}
+          onComplete={(score) => handleQuizComplete(selectedQuiz!, score)}
+        />
+      )}
     </div>
   );
 };
