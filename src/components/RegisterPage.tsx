@@ -9,7 +9,7 @@ import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,7 +19,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fullName || !username || !email || !password || !confirmPassword) {
+    if (!fullName || !email || !password || !confirmPassword) {
       toast.error('Please fill in all fields');
       return;
     }
