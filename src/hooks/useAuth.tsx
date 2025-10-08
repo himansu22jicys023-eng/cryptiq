@@ -98,6 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (data?.user && !data.session) {
+        // Store email for OTP verification
+        localStorage.setItem('verificationEmail', email);
         toast.success('Please check your email to verify your account');
         navigate('/verify-otp');
       } else {

@@ -3,18 +3,83 @@ import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Shield, CheckCircle } from 'lucide-react';
 import { GraduationCap } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const OTPVerificationPage = () => {
   const [otp, setOtp] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleVerify = () => {
-    // Handle OTP verification logic here
-    console.log('Verifying OTP:', otp);
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      toast.error('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const storedEmail = localStorage.getItem('verificationEmail');
+      if (!storedEmail) {
+        toast.error('Email not found. Please sign up again.');
+        navigate('/register');
+        return;
+      }
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: storedEmail,
+        token: otp,
+        type: 'email',
+      });
+
+      if (error) {
+        toast.error(error.message || 'Invalid verification code');
+        return;
+      }
+
+      toast.success('Email verified successfully!');
+      localStorage.removeItem('verificationEmail');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResendCode = () => {
-    // Handle resend code logic
-    console.log('Resending code...');
+  const handleResendCode = async () => {
+    const storedEmail = localStorage.getItem('verificationEmail');
+    if (!storedEmail) {
+      toast.error('Email not found. Please sign up again.');
+      navigate('/register');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: storedEmail,
+      });
+
+      if (error) {
+        toast.error(error.message || 'Failed to resend code');
+        return;
+      }
+
+      toast.success('Verification code sent to your email');
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangeEmail = () => {
+    localStorage.removeItem('verificationEmail');
+    navigate('/register');
   };
 
   return (
@@ -131,11 +196,16 @@ const OTPVerificationPage = () => {
               <div className="flex justify-between text-sm">
                 <button 
                   onClick={handleResendCode}
-                  className="text-muted-foreground hover:text-accent hover:underline font-medium"
+                  disabled={loading}
+                  className="text-muted-foreground hover:text-accent hover:underline font-medium disabled:opacity-50"
                 >
                   Resend Code
                 </button>
-                <button className="text-muted-foreground hover:text-accent hover:underline font-medium">
+                <button 
+                  onClick={handleChangeEmail}
+                  disabled={loading}
+                  className="text-muted-foreground hover:text-accent hover:underline font-medium disabled:opacity-50"
+                >
                   Change Email
                 </button>
               </div>
@@ -144,18 +214,18 @@ const OTPVerificationPage = () => {
               <Button 
                 className="w-full h-12 text-base font-medium bg-accent hover:bg-accent/90 text-accent-foreground"
                 onClick={handleVerify}
-                disabled={otp.length !== 6}
+                disabled={otp.length !== 6 || loading}
               >
-                VERIFY ACCOUNT
+                {loading ? 'VERIFYING...' : 'VERIFY ACCOUNT'}
               </Button>
             </div>
 
             {/* Footer */}
             <div className="text-center pt-4">
-              <span className="text-muted-foreground">Are you new? </span>
-              <a href="#" className="text-accent hover:underline font-medium">
-                Create an Account
-              </a>
+              <span className="text-muted-foreground">Already verified? </span>
+              <Link to="/login" className="text-accent hover:underline font-medium">
+                Sign In
+              </Link>
             </div>
           </div>
         </div>

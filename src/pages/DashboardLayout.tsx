@@ -22,10 +22,9 @@ export default function DashboardLayout() {
                   <span>{user?.email}</span>
                 </div>
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={signOut}
-                  className="flex items-center gap-2 hover:bg-transparent hover:border-border"
+                  className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
