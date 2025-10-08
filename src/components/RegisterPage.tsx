@@ -36,7 +36,7 @@ const RegisterPage = () => {
 
     setLoading(true);
     try {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(email, password, fullName);
       if (error) {
         toast.error(error.message || 'Failed to create account');
       }

@@ -4,9 +4,33 @@ import { Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function DashboardLayout() {
   const { user, signOut } = useAuth();
+  const [username, setUsername] = useState<string>('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, full_name')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) {
+        setUsername(data.username || data.full_name || user.email?.split('@')[0] || 'User');
+      } else if (!error) {
+        // Fallback to email username part
+        setUsername(user.email?.split('@')[0] || 'User');
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   return (
     <div className="dark min-h-screen bg-background">
@@ -19,7 +43,7 @@ export default function DashboardLayout() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <User className="w-4 h-4" />
-                  <span>{user?.email}</span>
+                  <span>{username}</span>
                 </div>
                 <Button
                   size="sm"
