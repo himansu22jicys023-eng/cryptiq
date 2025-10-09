@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          jiet_amount: number | null
+          jiet_rewarded: boolean | null
+          quiz_id: number
+          score: number
+          transaction_signature: string | null
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          jiet_amount?: number | null
+          jiet_rewarded?: boolean | null
+          quiz_id: number
+          score: number
+          transaction_signature?: string | null
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          jiet_amount?: number | null
+          jiet_rewarded?: boolean | null
+          quiz_id?: number
+          score?: number
+          transaction_signature?: string | null
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -3,8 +3,9 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-// Replace this with your actual JIET token mint address
-const JIET_TOKEN_MINT = 'YOUR_JIET_TOKEN_MINT_ADDRESS';
+// IMPORTANT: Replace this with your actual JIET token mint address from Solana
+// You can find this in your Solana token creation transaction or token registry
+const JIET_TOKEN_MINT = 'YOUR_JIET_TOKEN_MINT_ADDRESS_HERE';
 
 export const useJietBalance = () => {
   const { connection } = useConnection();

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Clock, Award, CheckCircle, Lock, TrendingUp, Target } from 'lucide-react';
+import { BookOpen, Clock, Award, CheckCircle, Lock, TrendingUp, Target, Coins } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { QuizModal } from '@/components/QuizModal';
 import { quizData } from '@/data/quizQuestions';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const quizzes = [
   {
@@ -78,13 +81,41 @@ const quizzes = [
 
 const Quiz = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<number | null>(null);
-  const [quizScores, setQuizScores] = useState<Record<number, number>>({
-    1: 90,
-    2: 85,
-    3: 75,
-    4: 80
-  });
+  const [quizScores, setQuizScores] = useState<Record<number, number>>({});
+  const [rewardedQuizzes, setRewardedQuizzes] = useState<Set<number>>(new Set());
+  const [isClaimingReward, setIsClaimingReward] = useState(false);
   const { toast } = useToast();
+  const { publicKey, connected } = useWallet();
+  const { user } = useAuth();
+
+  // Load quiz completions from database
+  useEffect(() => {
+    const loadCompletions = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('quiz_completions')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (data && !error) {
+        const scores: Record<number, number> = {};
+        const rewarded = new Set<number>();
+        
+        data.forEach((completion) => {
+          scores[completion.quiz_id] = completion.score;
+          if (completion.jiet_rewarded) {
+            rewarded.add(completion.quiz_id);
+          }
+        });
+        
+        setQuizScores(scores);
+        setRewardedQuizzes(rewarded);
+      }
+    };
+
+    loadCompletions();
+  }, [user]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -99,13 +130,102 @@ const Quiz = () => {
     }
   };
 
-  const handleQuizComplete = (quizId: number, score: number) => {
+  const handleQuizComplete = async (quizId: number, score: number) => {
     setQuizScores(prev => ({ ...prev, [quizId]: score }));
     
-    toast({
-      title: "Quiz Completed!",
-      description: `You scored ${score}%. Great job! 🎉`,
-    });
+    // Save completion to database
+    if (user) {
+      const { error } = await supabase
+        .from('quiz_completions')
+        .upsert({
+          user_id: user.id,
+          quiz_id: quizId,
+          score: score,
+        });
+
+      if (error) {
+        console.error('Error saving quiz completion:', error);
+      }
+    }
+    
+    // Show completion toast with claim button if wallet is connected
+    if (connected && publicKey && !rewardedQuizzes.has(quizId)) {
+      toast({
+        title: "Quiz Completed! 🎉",
+        description: `You scored ${score}%. Click below to claim your JIET tokens!`,
+        action: (
+          <Button 
+            size="sm" 
+            onClick={() => handleClaimReward(quizId, score)}
+            disabled={isClaimingReward}
+          >
+            Claim Reward
+          </Button>
+        ),
+      });
+    } else {
+      toast({
+        title: "Quiz Completed!",
+        description: `You scored ${score}%. ${!connected ? 'Connect your wallet to claim JIET rewards!' : ''}`,
+      });
+    }
+  };
+
+  const handleClaimReward = async (quizId: number, score: number) => {
+    if (!connected || !publicKey) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your Solana wallet to claim rewards.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (rewardedQuizzes.has(quizId)) {
+      toast({
+        title: "Already Claimed",
+        description: "You have already claimed rewards for this quiz.",
+      });
+      return;
+    }
+
+    setIsClaimingReward(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('transfer-jiet-reward', {
+        body: {
+          quizId,
+          score,
+          walletAddress: publicKey.toString(),
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setRewardedQuizzes(prev => new Set([...prev, quizId]));
+        
+        toast({
+          title: "Reward Claimed! 🎉",
+          description: data.message,
+        });
+      } else if (data.alreadyRewarded) {
+        setRewardedQuizzes(prev => new Set([...prev, quizId]));
+        toast({
+          title: "Already Claimed",
+          description: data.message,
+        });
+      }
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      toast({
+        title: "Error",
+        description: "Failed to claim reward. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsClaimingReward(false);
+    }
   };
 
   const handleStartQuiz = (quizId: number, locked: boolean) => {
@@ -135,6 +255,28 @@ const Quiz = () => {
           Test your crypto knowledge and earn XP
         </p>
       </div>
+
+      {/* Wallet Connection Notice */}
+      {!connected && (
+        <Card className="border-2 border-accent/50 bg-accent/5">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+                <Coins className="w-6 h-6 text-accent" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-foreground mb-1">
+                  Connect Wallet to Earn JIET Tokens! 🪙
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Complete quizzes and claim JIET token rewards directly to your Solana wallet. 
+                  Connect your wallet in the Rewards section to start earning!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -240,11 +382,33 @@ const Quiz = () => {
                 </div>
 
                 {isCompleted && (
-                  <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-foreground">Best Score:</p>
-                      <p className="text-lg font-bold text-green-500">{userScore}%</p>
+                  <div className="mb-4 space-y-2">
+                    <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-foreground">Best Score:</p>
+                        <p className="text-lg font-bold text-green-500">{userScore}%</p>
+                      </div>
                     </div>
+                    {!rewardedQuizzes.has(quiz.id) && connected && (
+                      <Button
+                        onClick={() => handleClaimReward(quiz.id, userScore)}
+                        disabled={isClaimingReward}
+                        variant="outline"
+                        className="w-full border-accent/50 hover:bg-accent/10"
+                        size="sm"
+                      >
+                        <Coins className="w-4 h-4 mr-2" />
+                        {isClaimingReward ? 'Claiming...' : 'Claim JIET Reward'}
+                      </Button>
+                    )}
+                    {rewardedQuizzes.has(quiz.id) && (
+                      <div className="p-2 bg-accent/10 border border-accent/20 rounded-lg text-center">
+                        <p className="text-xs text-accent font-medium">
+                          <CheckCircle className="w-3 h-3 inline mr-1" />
+                          JIET Reward Claimed
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
