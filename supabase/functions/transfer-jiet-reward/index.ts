@@ -32,7 +32,7 @@ serve(async (req) => {
     const privateKeyBase58 = Deno.env.get('SOLANA_WALLET_PRIVATE_KEY')!;
 
     // Replace with your actual JIET token mint address
-    const JIET_TOKEN_MINT = "YOUR_JIET_TOKEN_MINT_ADDRESS";
+    const JIET_TOKEN_MINT = "yuviMjXsZG6HLanQWForF9Dz7JVfmvgpNjqQUtDaYBJ";
 
     if (!privateKeyBase58) {
       throw new Error('SOLANA_WALLET_PRIVATE_KEY not configured');
