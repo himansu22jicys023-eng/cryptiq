@@ -5,7 +5,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 // IMPORTANT: Replace this with your actual JIET token mint address from Solana
 // You can find this in your Solana token creation transaction or token registry
-const JIET_TOKEN_MINT = 'yuviMjXsZG6HLanQWForF9Dz7JVfmvgpNjqQUtDaYBJ';
+const JIET_TOKEN_MINT = 'mntS6ZetAcdw5dLFFtLw3UEX3BZW5RkDPamSpEmpSbP';
 
 export const useJietBalance = () => {
   const { connection } = useConnection();
