@@ -3,13 +3,17 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useJietBalance } from "@/hooks/useJietBalance";
 
 export default function DashboardLayout() {
   const { user, signOut } = useAuth();
   const [username, setUsername] = useState<string>('');
+  const { connected } = useWallet();
+  const { balance: jietBalance } = useJietBalance();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -45,6 +49,12 @@ export default function DashboardLayout() {
                   <User className="w-4 h-4" />
                   <span>{username}</span>
                 </div>
+                {connected && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 rounded-lg border border-accent/20">
+                    <Coins className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-semibold text-accent">{jietBalance.toFixed(2)} JIET</span>
+                  </div>
+                )}
                 <Button
                   size="sm"
                   onClick={signOut}

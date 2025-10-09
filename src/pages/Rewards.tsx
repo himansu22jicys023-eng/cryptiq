@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trophy, Award, Star, Gift, Coins, CheckCircle, Lock, TrendingUp, Target } from 'lucide-react';
+import { Trophy, Award, Star, Gift, Coins, CheckCircle, Lock, TrendingUp, Target, Wallet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useJietBalance } from '@/hooks/useJietBalance';
 
 const achievements = [
   {
@@ -101,6 +104,8 @@ const redeemableRewards = [
 const Rewards = () => {
   const [totalCoins, setTotalCoins] = useState(430);
   const { toast } = useToast();
+  const { connected, publicKey } = useWallet();
+  const { balance: jietBalance, loading: jietLoading } = useJietBalance();
   const earnedAchievements = achievements.filter(a => a.earned).length;
 
   const handleRedeem = (reward: typeof redeemableRewards[0]) => {
@@ -125,6 +130,40 @@ const Rewards = () => {
           Track your progress and redeem exclusive rewards
         </p>
       </div>
+
+      {/* Solana Wallet Connection */}
+      <Card className="border-2 overflow-hidden bg-gradient-to-br from-card to-accent/5">
+        <CardContent className="p-8">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center">
+                <Wallet className="w-8 h-8 text-accent" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-foreground mb-1">Solana Wallet</h3>
+                <p className="text-sm text-muted-foreground">
+                  {connected 
+                    ? `Connected: ${publicKey?.toString().slice(0, 4)}...${publicKey?.toString().slice(-4)}`
+                    : 'Connect your wallet to view JIET tokens'
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              {connected && (
+                <div className="text-center bg-card/50 rounded-xl p-4 border border-accent/20">
+                  <p className="text-sm text-muted-foreground mb-1">JIET Balance</p>
+                  <p className="text-3xl font-bold text-accent">
+                    {jietLoading ? '...' : jietBalance.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">JIET Tokens</p>
+                </div>
+              )}
+              <WalletMultiButton className="!bg-gradient-to-r !from-accent !to-accent/80 hover:!from-accent/90 hover:!to-accent/70 !h-12 !px-6 !rounded-xl !font-semibold !shadow-lg !shadow-accent/20 !transition-all" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Coins Balance */}
       <Card className="border-2 overflow-hidden">
