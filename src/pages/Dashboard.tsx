@@ -11,7 +11,7 @@ const Dashboard = () => {
   const stats = [
     { title: 'Quizzes Completed', value: '4', total: '5', icon: BookOpen, color: 'text-primary' },
     { title: 'Labs Finished', value: '3', total: '4', icon: FlaskConical, color: 'text-accent' },
-    { title: 'Rewards Earned', value: '10', unit: 'coins', icon: Gift, color: 'text-orange-500' },
+    { title: 'JIET Earned', value: '10', unit: 'JIET', icon: Gift, color: 'text-orange-500' },
   ];
 
   const leaderboardData = [

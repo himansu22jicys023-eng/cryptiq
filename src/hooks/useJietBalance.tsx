@@ -23,11 +23,23 @@ export const useJietBalance = () => {
       try {
         setLoading(true);
         
+        console.log('Fetching JIET balance for wallet:', publicKey.toString());
+        console.log('JIET Token Mint:', JIET_TOKEN_MINT);
+        
         // Get all token accounts for the wallet
         const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
           publicKey,
           { programId: TOKEN_PROGRAM_ID }
         );
+
+        console.log('Total token accounts found:', tokenAccounts.value.length);
+        
+        // Log all token mints for debugging
+        tokenAccounts.value.forEach((account, index) => {
+          const mint = account.account.data.parsed.info.mint;
+          const amount = account.account.data.parsed.info.tokenAmount.uiAmount;
+          console.log(`Token ${index + 1}: Mint=${mint}, Amount=${amount}`);
+        });
 
         // Find JIET token account
         const jietAccount = tokenAccounts.value.find(
@@ -36,8 +48,10 @@ export const useJietBalance = () => {
 
         if (jietAccount) {
           const amount = jietAccount.account.data.parsed.info.tokenAmount.uiAmount;
+          console.log('JIET token account found! Balance:', amount);
           setBalance(amount || 0);
         } else {
+          console.log('No JIET token account found for this wallet');
           setBalance(0);
         }
       } catch (error) {

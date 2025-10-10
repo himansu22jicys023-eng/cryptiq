@@ -102,15 +102,13 @@ const redeemableRewards = [
 ];
 
 const Rewards = () => {
-  const [totalCoins, setTotalCoins] = useState(430);
   const { toast } = useToast();
   const { connected, publicKey } = useWallet();
   const { balance: jietBalance, loading: jietLoading } = useJietBalance();
   const earnedAchievements = achievements.filter(a => a.earned).length;
 
   const handleRedeem = (reward: typeof redeemableRewards[0]) => {
-    if (totalCoins >= reward.cost) {
-      setTotalCoins(prev => prev - reward.cost);
+    if (jietBalance >= reward.cost) {
       toast({
         title: "Reward Redeemed! 🎉",
         description: `You've successfully redeemed ${reward.title}`,
@@ -119,7 +117,7 @@ const Rewards = () => {
   };
 
   const nextMilestone = 500;
-  const progressToNext = (totalCoins / nextMilestone) * 100;
+  const progressToNext = (jietBalance / nextMilestone) * 100;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -165,30 +163,32 @@ const Rewards = () => {
         </CardContent>
       </Card>
 
-      {/* Coins Balance */}
+      {/* JIET Token Balance */}
       <Card className="border-2 overflow-hidden">
         <CardContent className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Your Balance</p>
+                <p className="text-sm text-muted-foreground mb-2">Your JIET Balance</p>
                 <div className="flex items-center gap-3">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                     <Coins className="w-8 h-8 text-primary" />
                   </div>
-                  <p className="text-5xl font-bold text-foreground">{totalCoins}</p>
-                  <span className="text-2xl font-medium text-muted-foreground">Coins</span>
+                  <p className="text-5xl font-bold text-foreground">
+                    {jietLoading ? '...' : jietBalance.toFixed(2)}
+                  </p>
+                  <span className="text-2xl font-medium text-muted-foreground">JIET</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Next Milestone</span>
-                  <span className="font-medium text-foreground">{totalCoins}/{nextMilestone}</span>
+                  <span className="font-medium text-foreground">{jietBalance.toFixed(0)}/{nextMilestone}</span>
                 </div>
                 <Progress value={progressToNext} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  Earn {nextMilestone - totalCoins} more coins to unlock premium rewards
+                  Earn {Math.max(0, nextMilestone - jietBalance).toFixed(0)} more JIET tokens to unlock premium rewards
                 </p>
               </div>
             </div>
@@ -287,7 +287,7 @@ const Rewards = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {redeemableRewards.map((reward) => {
             const IconComponent = reward.icon;
-            const canAfford = totalCoins >= reward.cost;
+            const canAfford = jietBalance >= reward.cost;
             
             return (
               <Card key={reward.id} className="border-2 hover:border-primary/50 transition-all group">
@@ -305,14 +305,14 @@ const Rewards = () => {
                     <div className="flex items-center gap-2">
                       <Coins className="w-6 h-6 text-primary" />
                       <span className="text-xl font-bold text-foreground">{reward.cost}</span>
-                      <span className="text-sm text-muted-foreground">coins</span>
+                      <span className="text-sm text-muted-foreground">JIET</span>
                     </div>
                     <Button 
                       onClick={() => handleRedeem(reward)}
                       disabled={!canAfford}
                       size="lg"
                     >
-                      {canAfford ? 'Redeem' : 'Insufficient Coins'}
+                      {canAfford ? 'Redeem' : 'Insufficient JIET'}
                     </Button>
                   </div>
                 </CardContent>
