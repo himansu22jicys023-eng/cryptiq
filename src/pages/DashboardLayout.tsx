@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Coins } from "lucide-react";
+import { LogOut, User, Coins, Unplug } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -12,7 +12,7 @@ import { useJietBalance } from "@/hooks/useJietBalance";
 export default function DashboardLayout() {
   const { user, signOut } = useAuth();
   const [username, setUsername] = useState<string>('');
-  const { connected } = useWallet();
+  const { connected, disconnect } = useWallet();
   const { balance: jietBalance } = useJietBalance();
 
   useEffect(() => {
@@ -50,10 +50,22 @@ export default function DashboardLayout() {
                   <span>{username}</span>
                 </div>
                 {connected && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 rounded-lg border border-accent/20">
-                    <Coins className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-semibold text-accent">{jietBalance.toFixed(2)} JIET</span>
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 rounded-lg border border-accent/20">
+                      <Coins className="w-4 h-4 text-accent" />
+                      <span className="text-sm font-semibold text-accent">{jietBalance.toFixed(2)} JIET</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={disconnect}
+                      className="gap-2"
+                      title="Disconnect Wallet"
+                    >
+                      <Unplug className="w-4 h-4" />
+                      <span className="hidden sm:inline">Disconnect</span>
+                    </Button>
+                  </>
                 )}
                 <Button
                   size="sm"

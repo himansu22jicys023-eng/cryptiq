@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trophy, Award, Star, Gift, Coins, CheckCircle, Lock, TrendingUp, Target, Wallet } from 'lucide-react';
+import { Trophy, Award, Star, Gift, Coins, CheckCircle, Lock, TrendingUp, Target, Wallet, Unplug } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -103,7 +103,7 @@ const redeemableRewards = [
 
 const Rewards = () => {
   const { toast } = useToast();
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey, disconnect } = useWallet();
   const { balance: jietBalance, loading: jietLoading } = useJietBalance();
   const earnedAchievements = achievements.filter(a => a.earned).length;
 
@@ -147,17 +147,30 @@ const Rewards = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               {connected && (
-                <div className="text-center bg-card/50 rounded-xl p-4 border border-accent/20">
-                  <p className="text-sm text-muted-foreground mb-1">JIET Balance</p>
-                  <p className="text-3xl font-bold text-accent">
-                    {jietLoading ? '...' : jietBalance.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">JIET Tokens</p>
-                </div>
+                <>
+                  <div className="text-center bg-card/50 rounded-xl p-4 border border-accent/20">
+                    <p className="text-sm text-muted-foreground mb-1">JIET Balance</p>
+                    <p className="text-3xl font-bold text-accent">
+                      {jietLoading ? '...' : jietBalance.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">JIET Tokens</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={disconnect}
+                    className="gap-2"
+                  >
+                    <Unplug className="w-5 h-5" />
+                    Disconnect Wallet
+                  </Button>
+                </>
               )}
-              <WalletMultiButton className="!bg-gradient-to-r !from-accent !to-accent/80 hover:!from-accent/90 hover:!to-accent/70 !h-12 !px-6 !rounded-xl !font-semibold !shadow-lg !shadow-accent/20 !transition-all" />
+              {!connected && (
+                <WalletMultiButton className="!bg-gradient-to-r !from-accent !to-accent/80 hover:!from-accent/90 hover:!to-accent/70 !h-12 !px-6 !rounded-xl !font-semibold !shadow-lg !shadow-accent/20 !transition-all" />
+              )}
             </div>
           </div>
         </CardContent>
