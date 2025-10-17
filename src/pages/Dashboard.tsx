@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Flame, BookOpen, FlaskConical, Gift, TrendingUp, Target, Award, Upload, Camera } from 'lucide-react';
+import { Trophy, Flame, BookOpen, FlaskConical, Gift, TrendingUp, Target, Award, Upload, Camera, Pencil } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NameEditDialog } from '@/components/NameEditDialog';
 
 interface UserStats {
   total_xp: number;
@@ -50,6 +51,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [jietBalance, setJietBalance] = useState(0);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Fetch user stats and profile
   useEffect(() => {
@@ -355,11 +357,21 @@ const Dashboard = () => {
                   />
                 </div>
                 <div className="flex-1 space-y-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">
-                      {displayName}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">
+                        {displayName}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditDialogOpen(true)}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   </div>
                   
                   {/* XP Progress */}
@@ -493,6 +505,16 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
+
+      {user && (
+        <NameEditDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          currentFullName={profile.full_name || ''}
+          currentUsername={profile.username || ''}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };
