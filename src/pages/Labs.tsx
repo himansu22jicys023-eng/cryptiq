@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Clock, Award, CheckCircle, Lock, Code, Zap, Target } from 'lucide-react';
+import { FlaskConical, Clock, Award, CheckCircle, Lock, Code, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { LabModal } from '@/components/LabModal';
 import { labTasksData } from '@/data/labTasks';
 import { useToast } from '@/hooks/use-toast';
@@ -83,7 +82,8 @@ const labs = [
 
 const Labs = () => {
   const [selectedLab, setSelectedLab] = useState<number | null>(null);
-  const [completedLabs, setCompletedLabs] = useState<number[]>([1, 2, 3]);
+  // canonical source of truth for completed labs (loaded from hook/db)
+  const [completedLabIds, setCompletedLabIds] = useState<number[]>([1, 2, 3]);
   const { toast } = useToast();
 
   const getDifficultyColor = (difficulty: string) => {
@@ -100,21 +100,50 @@ const Labs = () => {
   };
 
   const { completeLab, getCompletedLabs } = useLabCompletion();
-  const [completedLabIds, setCompletedLabIds] = useState<number[]>([]);
-  
-  // Load completed labs on mount
+
+  // load completed labs once on mount
   useEffect(() => {
+    let mounted = true;
     const loadCompleted = async () => {
-      const completed = await getCompletedLabs();
-      setCompletedLabIds(completed);
+      try {
+        const completed = await getCompletedLabs();
+        if (mounted && Array.isArray(completed)) {
+          setCompletedLabIds(completed);
+        }
+      } catch (err) {
+        // optional: show toast or console
+        console.error('Failed to load completed labs', err);
+      }
     };
     loadCompleted();
-  }, []);
-  
+    return () => { mounted = false; };
+  }, [getCompletedLabs]);
+
   const handleLabComplete = async (labId: number) => {
-    const result = await completeLab(labId);
-    if (result.success && !result.alreadyCompleted) {
-      setCompletedLabIds(prev => [...prev, labId]);
+    try {
+      const result = await completeLab(labId);
+      if (result && result.success && !result.alreadyCompleted) {
+        setCompletedLabIds(prev => {
+          if (prev.includes(labId)) return prev;
+          return [...prev, labId];
+        });
+        toast({
+          title: 'Lab completed',
+          description: 'XP awarded!'
+        });
+      } else if (result && result.alreadyCompleted) {
+        toast({
+          title: 'Already completed',
+          description: 'You had already completed this lab.'
+        });
+      }
+    } catch (err) {
+      console.error('Error completing lab', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to mark lab as completed.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -130,8 +159,8 @@ const Labs = () => {
     setSelectedLab(labId);
   };
 
-  const completedCount = completedLabs.length;
-  const totalXP = completedLabs.reduce((sum, labId) => {
+  const completedCount = completedLabIds.length;
+  const totalXP = completedLabIds.reduce((sum, labId) => {
     const lab = labs.find(l => l.id === labId);
     return sum + (lab?.xp || 0);
   }, 0);
@@ -200,7 +229,7 @@ const Labs = () => {
       {/* Labs Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {labs.map((lab) => {
-          const isCompleted = completedLabs.includes(lab.id);
+          const isCompleted = completedLabIds.includes(lab.id);
           
           return (
             <Card 
@@ -280,13 +309,13 @@ const Labs = () => {
       </div>
 
       {/* Lab Modal */}
-      {selectedLabData && selectedLab && (
+      {selectedLabData && selectedLab !== null && (
         <LabModal
           open={selectedLab !== null}
           onOpenChange={(open) => !open && setSelectedLab(null)}
           labTitle={selectedLabData.title}
           labDescription={selectedLabData.description}
-          tasks={labTasksData[selectedLab as keyof typeof labTasksData] || []}
+          tasks={labTasksData[selectedLab as any] || []}
           xpReward={selectedLabData.xp}
           onComplete={() => handleLabComplete(selectedLab!)}
         />

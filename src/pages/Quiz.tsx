@@ -93,24 +93,33 @@ const Quiz = () => {
     const loadCompletions = async () => {
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('quiz_completions')
-        .select('*')
-        .eq('user_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('quiz_completions')
+          .select('*')
+          .eq('user_id', user.id);
 
-      if (data && !error) {
-        const scores: Record<number, number> = {};
-        const rewarded = new Set<number>();
-        
-        data.forEach((completion) => {
-          scores[completion.quiz_id] = completion.score;
-          if (completion.jiet_rewarded) {
-            rewarded.add(completion.quiz_id);
-          }
-        });
-        
-        setQuizScores(scores);
-        setRewardedQuizzes(rewarded);
+        if (error) {
+          console.error('Error fetching quiz completions:', error);
+          return;
+        }
+
+        if (data) {
+          const scores: Record<number, number> = {};
+          const rewarded = new Set<number>();
+
+          data.forEach((completion: any) => {
+            scores[completion.quiz_id] = completion.score;
+            if (completion.jiet_rewarded) {
+              rewarded.add(completion.quiz_id);
+            }
+          });
+
+          setQuizScores(scores);
+          setRewardedQuizzes(rewarded);
+        }
+      } catch (err) {
+        console.error('Failed to load quiz completions', err);
       }
     };
 
@@ -132,34 +141,34 @@ const Quiz = () => {
 
   const handleQuizComplete = async (quizId: number, score: number) => {
     setQuizScores(prev => ({ ...prev, [quizId]: score }));
-    
-    // Save completion to database
-    if (user) {
-      const { error } = await supabase
-        .from('quiz_completions')
-        .upsert({
-          user_id: user.id,
-          quiz_id: quizId,
-          score: score,
-        });
 
-      if (error) {
-        console.error('Error saving quiz completion:', error);
+    // Save completion to database (score) - preserve jiet_rewarded if exists
+    if (user) {
+      try {
+        await supabase
+          .from('quiz_completions')
+          .upsert({
+            user_id: user.id,
+            quiz_id: quizId,
+            score: score,
+          }, { onConflict: ['user_id', 'quiz_id'] });
+      } catch (err) {
+        console.error('Error saving quiz completion:', err);
       }
     }
-    
-    // Show completion toast with claim button if wallet is connected
+
+    // Show completion toast with claim button if wallet is connected and reward not already claimed
     if (connected && publicKey && !rewardedQuizzes.has(quizId)) {
       toast({
         title: "Quiz Completed! 🎉",
         description: `You scored ${score}%. Click below to claim your JIET tokens!`,
         action: (
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={() => handleClaimReward(quizId, score)}
             disabled={isClaimingReward}
           >
-            Claim Reward
+            {isClaimingReward ? 'Claiming...' : 'Claim Reward'}
           </Button>
         ),
       });
@@ -192,32 +201,58 @@ const Quiz = () => {
     setIsClaimingReward(true);
 
     try {
+      // Supabase function expects string body
       const { data, error } = await supabase.functions.invoke('transfer-jiet-reward', {
-        body: {
+        body: JSON.stringify({
           quizId,
           score,
           walletAddress: publicKey.toString(),
-        }
+        })
       });
 
       if (error) throw error;
 
-      if (data.success) {
-        setRewardedQuizzes(prev => new Set([...prev, quizId]));
-        
+      // expected returned shape: { success: boolean, message?: string, alreadyRewarded?: boolean }
+      if (data && (data as any).success) {
+        setRewardedQuizzes(prev => new Set([...Array.from(prev), quizId]));
+
+        // persist jiet_rewarded in quiz_completions table
+        if (user) {
+          try {
+            await supabase
+              .from('quiz_completions')
+              .upsert({
+                user_id: user.id,
+                quiz_id: quizId,
+                score: quizScores[quizId] ?? score,
+                jiet_rewarded: true
+              }, { onConflict: ['user_id', 'quiz_id'] });
+          } catch (err) {
+            console.error('Failed to mark jiet_rewarded in DB', err);
+          }
+        }
+
         toast({
           title: "Reward Claimed! 🎉",
-          description: data.message,
+          description: (data as any).message || 'JIET tokens were sent to your wallet.',
         });
-      } else if (data.alreadyRewarded) {
-        setRewardedQuizzes(prev => new Set([...prev, quizId]));
+      } else if (data && (data as any).alreadyRewarded) {
+        // Mark locally to avoid repeated calls
+        setRewardedQuizzes(prev => new Set([...Array.from(prev), quizId]));
         toast({
           title: "Already Claimed",
-          description: data.message,
+          description: (data as any).message || 'This quiz reward was already claimed.',
+        });
+      } else {
+        console.error('Unexpected response from function', data);
+        toast({
+          title: "Error",
+          description: "Failed to claim reward. Please try again.",
+          variant: "destructive"
         });
       }
-    } catch (error) {
-      console.error('Error claiming reward:', error);
+    } catch (err) {
+      console.error('Error claiming reward:', err);
       toast({
         title: "Error",
         description: "Failed to claim reward. Please try again.",
@@ -240,8 +275,13 @@ const Quiz = () => {
     setSelectedQuiz(quizId);
   };
 
-  const totalXP = Object.values(quizScores).reduce((acc, score) => {
-    return acc + Math.round((score / 100) * 100);
+  // total XP = sum of (score% * quiz.xp) — adjust as desired
+  const totalXP = Object.entries(quizScores).reduce((acc, [quizIdStr, score]) => {
+    const qid = Number(quizIdStr);
+    const quizMeta = quizzes.find(q => q.id === qid);
+    if (!quizMeta) return acc;
+    const earned = Math.round((Number(score) / 100) * quizMeta.xp);
+    return acc + earned;
   }, 0);
 
   const selectedQuizData = quizzes.find(q => q.id === selectedQuiz);
