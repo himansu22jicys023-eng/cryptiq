@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { LabModal } from '@/components/LabModal';
 import { labTasksData } from '@/data/labTasks';
 import { useToast } from '@/hooks/use-toast';
+import { useLabCompletion } from '@/hooks/useLabCompletion';
 
 const labs = [
   {
@@ -98,12 +99,23 @@ const Labs = () => {
     }
   };
 
-  const handleLabComplete = (labId: number) => {
-    setCompletedLabs(prev => [...prev, labId]);
-    toast({
-      title: "Lab Completed! 🎉",
-      description: `You've earned ${labs.find(l => l.id === labId)?.xp} XP!`,
-    });
+  const { completeLab, getCompletedLabs } = useLabCompletion();
+  const [completedLabIds, setCompletedLabIds] = useState<number[]>([]);
+  
+  // Load completed labs on mount
+  useEffect(() => {
+    const loadCompleted = async () => {
+      const completed = await getCompletedLabs();
+      setCompletedLabIds(completed);
+    };
+    loadCompleted();
+  }, []);
+  
+  const handleLabComplete = async (labId: number) => {
+    const result = await completeLab(labId);
+    if (result.success && !result.alreadyCompleted) {
+      setCompletedLabIds(prev => [...prev, labId]);
+    }
   };
 
   const handleStartLab = (labId: number, locked: boolean) => {

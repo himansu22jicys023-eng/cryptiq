@@ -1,35 +1,319 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Flame, BookOpen, FlaskConical, Gift, TrendingUp, Target, Award } from 'lucide-react';
-import cryptiqIllustration from '@/assets/cryptiq-learning-illustration.png';
+import { Trophy, Flame, BookOpen, FlaskConical, Gift, TrendingUp, Target, Award, Upload, Camera } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+interface UserStats {
+  total_xp: number;
+  current_streak: number;
+  quizzes_completed: number;
+  labs_completed: number;
+  last_activity_date: string;
+}
+
+interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  total_xp: number;
+  rank: number;
+  isCurrentUser: boolean;
+}
+
+interface Profile {
+  username: string;
+  full_name: string;
+  avatar_url: string;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState<UserStats>({
+    total_xp: 0,
+    current_streak: 0,
+    quizzes_completed: 0,
+    labs_completed: 0,
+    last_activity_date: new Date().toISOString(),
+  });
+  const [profile, setProfile] = useState<Profile>({
+    username: '',
+    full_name: '',
+    avatar_url: '',
+  });
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [jietBalance, setJietBalance] = useState(0);
 
-  const stats = [
-    { title: 'Quizzes Completed', value: '4', total: '5', icon: BookOpen, color: 'text-primary' },
-    { title: 'Labs Finished', value: '3', total: '4', icon: FlaskConical, color: 'text-accent' },
-    { title: 'JIET Earned', value: '10', unit: 'JIET', icon: Gift, color: 'text-orange-500' },
+  // Fetch user stats and profile
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('username, full_name, avatar_url')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileData && !profileError) {
+          setProfile(profileData);
+        }
+
+        // Fetch or create user stats
+        let { data: statsData, error: statsError } = await supabase
+          .from('user_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (statsError && statsError.code === 'PGRST116') {
+          // User stats don't exist, create them
+          const { data: newStats, error: createError } = await supabase
+            .from('user_stats')
+            .insert({ user_id: user.id })
+            .select()
+            .single();
+
+          if (newStats && !createError) {
+            statsData = newStats;
+          }
+        }
+
+        if (statsData) {
+          setStats(statsData);
+        }
+
+        // Fetch JIET balance from quiz completions
+        const { data: quizCompletions } = await supabase
+          .from('quiz_completions')
+          .select('jiet_amount')
+          .eq('user_id', user.id);
+
+        if (quizCompletions) {
+          const totalJiet = quizCompletions.reduce(
+            (sum, completion) => sum + (completion.jiet_amount || 0),
+            0
+          );
+          setJietBalance(totalJiet);
+        }
+
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+
+    // Set up real-time subscription for user stats
+    const statsChannel = supabase
+      .channel('user_stats_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setStats(payload.new as UserStats);
+          }
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for profile changes
+    const profileChannel = supabase
+      .channel('profile_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            const newProfile = payload.new as any;
+            setProfile({
+              username: newProfile.username,
+              full_name: newProfile.full_name,
+              avatar_url: newProfile.avatar_url,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(statsChannel);
+      supabase.removeChannel(profileChannel);
+    };
+  }, [user]);
+
+  // Fetch leaderboard
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_stats')
+          .select(`
+            user_id,
+            total_xp,
+            profiles!inner(username, full_name, avatar_url)
+          `)
+          .order('total_xp', { ascending: false })
+          .limit(10);
+
+        if (data && !error) {
+          const leaderboardData: LeaderboardEntry[] = data.map((entry: any, index) => ({
+            user_id: entry.user_id,
+            username: entry.profiles.username || entry.profiles.full_name || 'User',
+            full_name: entry.profiles.full_name,
+            avatar_url: entry.profiles.avatar_url,
+            total_xp: entry.total_xp,
+            rank: index + 1,
+            isCurrentUser: entry.user_id === user?.id,
+          }));
+
+          setLeaderboard(leaderboardData);
+        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    };
+
+    fetchLeaderboard();
+
+    // Set up real-time subscription for leaderboard
+    const leaderboardChannel = supabase
+      .channel('leaderboard_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+        },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(leaderboardChannel);
+    };
+  }, [user]);
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!user || !event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      setUploadingAvatar(true);
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Math.random()}.${fileExt}`;
+
+      // Delete old avatar if exists
+      if (profile.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').pop();
+        if (oldPath) {
+          await supabase.storage
+            .from('avatars')
+            .remove([`${user.id}/${oldPath}`]);
+        }
+      }
+
+      // Upload new avatar
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlData.publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Avatar updated successfully!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const displayName = profile.username || profile.full_name || user?.email?.split('@')[0] || 'User';
+  const nextLevelXP = Math.ceil((stats.total_xp + 1) / 1000) * 1000;
+  const xpProgress = (stats.total_xp / nextLevelXP) * 100;
+  const currentLevel = Math.floor(stats.total_xp / 1000) + 1;
+
+  const statsCards = [
+    { 
+      title: 'Quizzes Completed', 
+      value: stats.quizzes_completed.toString(), 
+      total: '5', 
+      icon: BookOpen, 
+      color: 'text-primary' 
+    },
+    { 
+      title: 'Labs Finished', 
+      value: stats.labs_completed.toString(), 
+      total: '4', 
+      icon: FlaskConical, 
+      color: 'text-accent' 
+    },
+    { 
+      title: 'JIET Earned', 
+      value: jietBalance.toFixed(1), 
+      unit: 'JIET', 
+      icon: Gift, 
+      color: 'text-orange-500' 
+    },
   ];
 
-  const leaderboardData = [
-    { rank: 1, name: 'Yuvraj', xp: 4500, isUser: false },
-    { rank: 2, name: 'Vishal', xp: 4200, isUser: false },
-    { rank: 3, name: user?.email?.split('@')[0] || 'You', xp: 3000, isUser: true },
-    { rank: 4, name: 'Priya', xp: 2800, isUser: false },
-    { rank: 5, name: 'Arjun', xp: 2500, isUser: false },
-  ];
-
-  const xpProgress = (3000 / 4000) * 100;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Welcome Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold text-foreground">
-          Welcome back, {user?.email?.split('@')[0] || 'User'}! 👋
+          Welcome back, {displayName}! 👋
         </h1>
         <p className="text-muted-foreground text-lg">
           Track your progress and keep learning
@@ -44,17 +328,36 @@ const Dashboard = () => {
           <Card className="border-2 overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-start gap-6">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                  <img 
-                    src={cryptiqIllustration} 
-                    alt="Profile"
-                    className="w-16 h-16 object-contain"
+                <div className="relative group">
+                  <Avatar className="w-24 h-24 ring-4 ring-primary/10">
+                    <AvatarImage src={profile.avatar_url} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-2xl font-bold">
+                      {displayName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploadingAvatar ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    ) : (
+                      <Camera className="w-6 h-6 text-white" />
+                    )}
+                  </label>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
                   />
                 </div>
                 <div className="flex-1 space-y-4">
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">
-                      {user?.email?.split('@')[0] || 'User'}
+                      {displayName}
                     </h2>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
@@ -64,9 +367,11 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-foreground font-medium flex items-center gap-2">
                         <Flame className="w-4 h-4 text-orange-500" />
-                        Level Progress
+                        Level {currentLevel}
                       </span>
-                      <span className="text-muted-foreground">3000 / 4000 XP</span>
+                      <span className="text-muted-foreground">
+                        {stats.total_xp} / {nextLevelXP} XP
+                      </span>
                     </div>
                     <Progress value={xpProgress} className="h-2" />
                   </div>
@@ -79,7 +384,9 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="text-muted-foreground text-xs">Rank</p>
-                        <p className="font-semibold text-foreground">#3</p>
+                        <p className="font-semibold text-foreground">
+                          #{leaderboard.find(l => l.isCurrentUser)?.rank || '-'}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -88,7 +395,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <p className="text-muted-foreground text-xs">Streak</p>
-                        <p className="font-semibold text-foreground">7 days</p>
+                        <p className="font-semibold text-foreground">{stats.current_streak} days</p>
                       </div>
                     </div>
                   </div>
@@ -99,7 +406,7 @@ const Dashboard = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {stats.map((stat, index) => (
+            {statsCards.map((stat, index) => (
               <Card key={index} className="border-2 hover:border-primary/50 transition-colors">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -135,41 +442,53 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {leaderboardData.map((entry) => (
-                <div
-                  key={entry.rank}
-                  className={`flex items-center justify-between p-4 rounded-xl transition-all ${
-                    entry.isUser
-                      ? 'bg-primary/10 border-2 border-primary/50'
-                      : 'bg-muted/50 hover:bg-muted'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        entry.rank === 1
-                          ? 'bg-yellow-500/20 text-yellow-600'
-                          : entry.rank === 2
-                          ? 'bg-slate-400/20 text-slate-600'
-                          : entry.rank === 3
-                          ? 'bg-orange-500/20 text-orange-600'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {entry.rank}
+              {leaderboard.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No leaderboard data yet
+                </p>
+              ) : (
+                leaderboard.map((entry) => (
+                  <div
+                    key={entry.user_id}
+                    className={`flex items-center justify-between p-4 rounded-xl transition-all ${
+                      entry.isCurrentUser
+                        ? 'bg-primary/10 border-2 border-primary/50'
+                        : 'bg-muted/50 hover:bg-muted'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                          entry.rank === 1
+                            ? 'bg-yellow-500/20 text-yellow-600'
+                            : entry.rank === 2
+                            ? 'bg-slate-400/20 text-slate-600'
+                            : entry.rank === 3
+                            ? 'bg-orange-500/20 text-orange-600'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {entry.rank}
+                      </div>
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={entry.avatar_url} />
+                        <AvatarFallback className="text-xs">
+                          {entry.username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={`font-medium ${entry.isCurrentUser ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {entry.username}
+                      </span>
                     </div>
-                    <span className={`font-medium ${entry.isUser ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {entry.name}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className={`font-semibold ${entry.isCurrentUser ? 'text-primary' : 'text-foreground'}`}>
+                        {entry.total_xp}
+                      </span>
+                      <span className="text-xs text-muted-foreground">XP</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className={`font-semibold ${entry.isUser ? 'text-primary' : 'text-foreground'}`}>
-                      {entry.xp}
-                    </span>
-                    <span className="text-xs text-muted-foreground">XP</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
