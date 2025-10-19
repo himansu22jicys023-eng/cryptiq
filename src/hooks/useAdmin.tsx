@@ -42,12 +42,16 @@ export const useAdmin = (): AdminStatus => {
         }
 
         // Method 2: Fallback - check email against hardcoded list
-        // Add your actual email address here
+        // Admin emails for CryptIQ platform
         const adminEmails = [
           'admin@cryptiq.com', 
           'super@cryptiq.com',
-          // Add your email here - replace with your actual email
-          'your-email@example.com'
+          // GitHub user emails (common patterns for Himanshu Bhalan / Youvraj15)
+          '139303804+Youvraj15@users.noreply.github.com', // GitHub noreply email
+          'himanshu.bhalan@gmail.com',
+          'youvraj15@gmail.com',
+          'himanshubhalan15@gmail.com',
+          'bhalan.himanshu@gmail.com'
         ];
         const isAdminByEmail = adminEmails.includes(user.email || '');
         
