@@ -42,8 +42,13 @@ export const useAdmin = (): AdminStatus => {
         }
 
         // Method 2: Fallback - check email against hardcoded list
-        // (Use this temporarily until you set up admin_roles in database)
-        const adminEmails = ['admin@cryptiq.com', 'super@cryptiq.com'];
+        // Add your actual email address here
+        const adminEmails = [
+          'admin@cryptiq.com', 
+          'super@cryptiq.com',
+          // Add your email here - replace with your actual email
+          'your-email@example.com'
+        ];
         const isAdminByEmail = adminEmails.includes(user.email || '');
         
         setAdminStatus({
