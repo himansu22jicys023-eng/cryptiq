@@ -1,3 +1,4 @@
+// src/App.tsx - Updated with Admin route
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
 import Labs from "./pages/Labs";
 import Rewards from "./pages/Rewards";
-
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,9 @@ const App = () => (
               <Route path="quiz" element={<Quiz />} />
               <Route path="labs" element={<Labs />} />
               <Route path="rewards" element={<Rewards />} />
+            </Route>
+            <Route path="/admin" element={<DashboardLayout />}>
+              <Route index element={<Admin />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

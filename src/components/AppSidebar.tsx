@@ -1,4 +1,5 @@
-import { Home, BookOpen, FlaskConical, Trophy, GraduationCap } from "lucide-react";
+// src/components/AppSidebar.tsx - Updated with admin link
+import { Home, BookOpen, FlaskConical, Trophy, GraduationCap, Shield } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -9,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const items = [
   { title: "Home", url: "/dashboard", icon: Home },
@@ -19,6 +21,7 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { isAdmin } = useAdmin();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
@@ -31,7 +34,6 @@ export function AppSidebar() {
         {/* Logo */}
         <div className="p-6 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            
             <span className="text-sidebar-foreground font-bold text-lg">CryptIQ</span>
             <GraduationCap className="w-6 h-6 text-accent" />
           </div>
@@ -50,6 +52,21 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Admin Link - Only visible to admins */}
+              {isAdmin && (
+                <>
+                  <div className="my-2 border-t border-sidebar-border" />
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild className="h-12 rounded-xl">
+                      <NavLink to="/admin" className={getNavCls}>
+                        <Shield className="h-5 w-5" />
+                        <span className="ml-3">Admin Panel</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
