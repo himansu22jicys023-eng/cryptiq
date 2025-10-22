@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Clock, Award, CheckCircle, Lock, TrendingUp, Target, Coins, Trophy } from 'lucide-react';
+import { BookOpen, Clock, Award, CheckCircle, Lock, TrendingUp, Target, Coins, Trophy, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { QuizModal } from '@/components/QuizModal';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedQuizData } from '@/hooks/useEnhancedQuizData';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface QuizQuestion {
   id: string;
@@ -42,6 +43,7 @@ const Quiz = () => {
     getCompletedCount,
     getQuizLeaderboard,
     markRewardClaimed,
+    getUserRank,
   } = useEnhancedQuizData();
 
   useEffect(() => {
@@ -93,18 +95,11 @@ const Quiz = () => {
     }
   };
 
-  const handleQuizComplete = async (quizId: number, score: number) => {
+  const handleQuizComplete = async (quizId: number, score: number, answers: any[]) => {
     try {
       const timeTaken = quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000) : 0;
 
-      const answersWithDetails = selectedQuizQuestions.map((q, idx) => ({
-        question_id: q.id,
-        selected: -1,
-        correct: q.correctAnswer,
-        is_correct: false,
-      }));
-
-      const result = await submitQuizAttempt(quizId, score, timeTaken, answersWithDetails);
+      const result = await submitQuizAttempt(quizId, score, timeTaken, answers);
 
       const message = result.is_best_score
         ? `New best score: ${score}%! ${result.passed ? `+${result.xp_earned} XP earned!` : ''}`
@@ -464,7 +459,15 @@ const Quiz = () => {
           quizTitle={selectedQuizData.title}
           questions={selectedQuizQuestions as any}
           xpReward={selectedQuizData.xp_reward}
-          onComplete={(score) => handleQuizComplete(selectedQuiz!, score)}
+          onComplete={(score) => {
+            const answersWithDetails = selectedQuizQuestions.map((q, idx) => ({
+              question_id: q.id,
+              selected: -1,
+              correct: q.correctAnswer,
+              is_correct: false,
+            }));
+            handleQuizComplete(selectedQuiz!, score, answersWithDetails);
+          }}
         />
       )}
 
