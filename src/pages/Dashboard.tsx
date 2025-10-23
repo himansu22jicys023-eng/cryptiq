@@ -169,39 +169,119 @@ const Dashboard = () => {
   }, [user]);
 
   // Fetch leaderboard
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_stats')
-          .select(`
-            user_id,
-            total_xp,
-            profiles!inner(username, full_name, avatar_url)
-          `)
-          .order('total_xp', { ascending: false })
-          .limit(10);
+ // Updated leaderboard fetching section for Dashboard.tsx
 
-        if (data && !error) {
-          const leaderboardData: LeaderboardEntry[] = data.map((entry: any, index) => ({
-            user_id: entry.user_id,
-            username: entry.profiles.username || entry.profiles.full_name || 'User',
-            full_name: entry.profiles.full_name,
-            avatar_url: entry.profiles.avatar_url,
-            total_xp: entry.total_xp,
-            rank: index + 1,
-            isCurrentUser: entry.user_id === user?.id,
-          }));
+// Replace the existing leaderboard useEffect with this:
 
-          setLeaderboard(leaderboardData);
-        }
-      } catch (error) {
-        console.error('Error fetching leaderboard:', error);
+useEffect(() => {
+  const fetchLeaderboard = async () => {
+    try {
+      console.log('Fetching leaderboard...');
+      
+      // Method 1: Using the database function (recommended)
+      const { data: functionData, error: functionError } = await supabase
+        .rpc('get_leaderboard', { limit_count: 10 });
+
+      if (!functionError && functionData) {
+        const leaderboardData: LeaderboardEntry[] = functionData.map((entry: any) => ({
+          user_id: entry.user_id,
+          username: entry.username || 'Anonymous',
+          full_name: entry.full_name || '',
+          avatar_url: entry.avatar_url || '',
+          total_xp: entry.total_xp,
+          rank: Number(entry.rank),
+          isCurrentUser: entry.user_id === user?.id,
+        }));
+
+        console.log('Leaderboard data:', leaderboardData);
+        setLeaderboard(leaderboardData);
+        return;
       }
-    };
 
+      console.log('Function call failed, trying manual query...', functionError);
+
+      // Method 2: Manual query fallback
+      const { data: statsData, error: statsError } = await supabase
+        .from('user_stats')
+        .select('user_id, total_xp')
+        .order('total_xp', { ascending: false })
+        .limit(10);
+
+      if (statsError) {
+        console.error('Stats query error:', statsError);
+        throw statsError;
+      }
+
+      if (!statsData || statsData.length === 0) {
+        console.log('No user stats found');
+        setLeaderboard([]);
+        return;
+      }
+
+      console.log('Found stats for', statsData.length, 'users');
+
+      // Fetch profiles
+      const userIds = statsData.map(s => s.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name, avatar_url')
+        .in('user_id', userIds);
+
+      if (profilesError) {
+        console.error('Profiles query error:', profilesError);
+      }
+
+      console.log('Found profiles for', profilesData?.length || 0, 'users');
+
+      // Combine data
+      const leaderboardData: LeaderboardEntry[] = statsData.map((stat, index) => {
+        const profile = profilesData?.find(p => p.user_id === stat.user_id);
+        return {
+          user_id: stat.user_id,
+          username: profile?.username || profile?.full_name || `User ${index + 1}`,
+          full_name: profile?.full_name || '',
+          avatar_url: profile?.avatar_url || '',
+          total_xp: stat.total_xp,
+          rank: index + 1,
+          isCurrentUser: stat.user_id === user?.id,
+        };
+      });
+
+      console.log('Final leaderboard:', leaderboardData);
+      setLeaderboard(leaderboardData);
+
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      setLeaderboard([]);
+      toast.error('Failed to load leaderboard');
+    }
+  };
+
+  if (user) {
     fetchLeaderboard();
 
+    // Set up real-time subscription
+    const leaderboardChannel = supabase
+      .channel('leaderboard_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+        },
+        (payload) => {
+          console.log('User stats changed:', payload);
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(leaderboardChannel);
+    };
+  }
+}, [user]);
     // Set up real-time subscription for leaderboard
     const leaderboardChannel = supabase
       .channel('leaderboard_changes')
