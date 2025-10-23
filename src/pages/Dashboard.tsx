@@ -260,29 +260,6 @@ useEffect(() => {
   if (user) {
     fetchLeaderboard();
 
-    // Set up real-time subscription
-    const leaderboardChannel = supabase
-      .channel('leaderboard_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_stats',
-        },
-        (payload) => {
-          console.log('User stats changed:', payload);
-          fetchLeaderboard();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(leaderboardChannel);
-    };
-  }
-}, [user]);
-    // Set up real-time subscription for leaderboard
     const leaderboardChannel = supabase
       .channel('leaderboard_changes')
       .on(
@@ -301,7 +278,8 @@ useEffect(() => {
     return () => {
       supabase.removeChannel(leaderboardChannel);
     };
-  }, [user]);
+  }
+}, [user]);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
