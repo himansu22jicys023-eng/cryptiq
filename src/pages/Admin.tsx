@@ -109,7 +109,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- Data States ---
+  // --- Data States (Initialized as empty arrays) ---
   const [stats, setStats] = useState({ users: 0, quizzes: 0, completions: 0 });
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -150,7 +150,7 @@ const Admin = () => {
       
       // --- FIX: Ensure data is always an array ---
       setQuizzes(quizData.data || []);
-      setUsers(userData.data || []); // This was the line I missed
+      setUsers(userData.data || []); 
       setRecentCompletions(completionData.data || []);
       // --- End of FIX ---
 
@@ -174,7 +174,7 @@ const Admin = () => {
     if (user && isAdmin) {
       fetchData();
     }
-  }, [user, isAdmin]); // 'toast' dependency removed as it's a stable function from a hook
+  }, [user, isAdmin]);
 
   // --- Auth & Loading Guards ---
   if (isAdminLoading) {
@@ -258,13 +258,14 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {/* --- NEW DEFENSIVE GUARD --- */}
                   {isLoading ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  ) : recentCompletions.length === 0 ? (
+                  ) : !Array.isArray(recentCompletions) || recentCompletions.length === 0 ? (
                      <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground">
                         No completions yet.
@@ -394,7 +395,8 @@ const QuizManagementTab = ({ quizzes, refetchQuizzes }: { quizzes: Quiz[], refet
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quizzes.length === 0 ? (
+            {/* --- NEW DEFENSIVE GUARD --- */}
+            {!Array.isArray(quizzes) || quizzes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No quizzes found. Add one!
@@ -509,9 +511,19 @@ const QuizEditDialog = ({ open, onOpenChange, quiz, onSave }: {
         toast({ title: 'Success', description: 'Quiz updated successfully.' });
       } else {
         // Create new quiz
-        const { error } = await supabase.from('quizzes').insert(values);
+        // We need to get the ID back to create questions
+        const { data, error } = await supabase
+          .from('quizzes')
+          .insert(values)
+          .select('id')
+          .single();
+          
         if (error) throw error;
+        if (!data) throw new Error("Could not retrieve new quiz ID.");
+        
         toast({ title: 'Success', description: 'Quiz created successfully.' });
+        // Optionally, you could open the question editor here
+        // e.g., onSave(data.id)
       }
       onSave();
       onOpenChange(false);
@@ -694,20 +706,21 @@ const UserManagementTab = ({ users, isLoading }: { users: UserProfile[], isLoadi
             </TableRow>
           </TableHeader>
           <TableBody>
+            {/* --- NEW DEFENSIVE GUARD --- */}
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : users.length === 0 ? (
+            ) : !Array.isArray(users) || users.length === 0 ? (
                <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No users found.
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => ( // This was the error line (approx 414)
+              users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.full_name || 'N/A'}</TableCell>
