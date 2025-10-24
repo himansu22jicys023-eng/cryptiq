@@ -27,7 +27,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -38,7 +37,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Form,
@@ -146,13 +144,13 @@ const Admin = () => {
           .limit(5),
       ]);
 
-      if (quizData.error) throw new Error(quizData.error.message);
-      if (userData.error) throw new Error(userData.error.message);
-      if (completionData.error) throw new Error(completionData.error.message);
+      if (quizData.error) throw new Error(`Quizzes Error: ${quizData.error.message}`);
+      if (userData.error) throw new Error(`Users Error: ${userData.error.message}`);
+      if (completionData.error) throw new Error(`Completions Error: ${completionData.error.message}`);
       
       // --- FIX: Ensure data is always an array ---
       setQuizzes(quizData.data || []);
-      setUsers(userData.data || []);
+      setUsers(userData.data || []); // This was the line I missed
       setRecentCompletions(completionData.data || []);
       // --- End of FIX ---
 
@@ -162,7 +160,7 @@ const Admin = () => {
         description: error.message,
         variant: 'destructive',
       });
-      // Set to empty arrays on error to prevent .map crash
+      // Set ALL to empty arrays on error to prevent .map crash
       setQuizzes([]);
       setUsers([]);
       setRecentCompletions([]);
@@ -403,7 +401,7 @@ const QuizManagementTab = ({ quizzes, refetchQuizzes }: { quizzes: Quiz[], refet
                 </TableCell>
               </TableRow>
             ) : (
-              quizzes.map((quiz) => ( // This was line 177
+              quizzes.map((quiz) => (
                 <TableRow key={quiz.id}>
                   <TableCell>{quiz.title}</TableCell>
                   <TableCell><Badge>{quiz.difficulty}</Badge></TableCell>
@@ -709,7 +707,7 @@ const UserManagementTab = ({ users, isLoading }: { users: UserProfile[], isLoadi
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
+              users.map((user) => ( // This was the error line (approx 414)
                 <TableRow key={user.id}>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.full_name || 'N/A'}</TableCell>
