@@ -43,7 +43,10 @@ export const QuizModal = ({
   const [timeLeft, setTimeLeft] = useState(30);
   const [showExplanation, setShowExplanation] = useState(false);
 
-  // Handle empty questions prop
+  // --- NEW: State for final results ---
+  const [finalScore, setFinalScore] = useState(0);
+  const [finalCorrectCount, setFinalCorrectCount] = useState(0);
+
   const validQuestions = Array.isArray(questions) ? questions : [];
   const totalQuestions = validQuestions.length > 0 ? validQuestions.length : 1;
 
@@ -56,12 +59,34 @@ export const QuizModal = ({
     }
   }, [open]);
 
+  // --- calculateResults: Now accepts final answers array ---
+  const calculateResults = (finalAnswers: number[]) => {
+    if (validQuestions.length === 0) {
+      setFinalScore(0);
+      setFinalCorrectCount(0);
+      onComplete(0);
+      setShowResults(true);
+      return;
+    }
+    
+    const correctCount = finalAnswers.filter(
+      (answer, index) => validQuestions[index] && answer === validQuestions[index].correctAnswer
+    ).length;
+    const score = Math.round((correctCount / validQuestions.length) * 100);
+    
+    setFinalScore(score); // Store the final score in state
+    setFinalCorrectCount(correctCount); // Store the final count in state
+    onComplete(score);     // Report score to parent
+    setShowResults(true);  // Show the results screen
+  };
+
+  // Timer logic - calls handleNextQuestion on timeout (which acts as a skip)
   useEffect(() => {
     if (open && !showResults && !showExplanation && validQuestions.length > 0) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            handleNextQuestion();
+            handleNextQuestion(); // This will trigger skip logic
             return 30;
           }
           return prev - 1;
@@ -79,6 +104,8 @@ export const QuizModal = ({
     setShowResults(false);
     setTimeLeft(30);
     setShowExplanation(false);
+    setFinalScore(0);
+    setFinalCorrectCount(0);
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
@@ -87,59 +114,50 @@ export const QuizModal = ({
     }
   };
 
+  // --- handleSubmitAnswer: Only shows explanation and saves answer ---
   const handleSubmitAnswer = () => {
     if (selectedAnswer === null) return;
     
     setShowExplanation(true);
-    setAnswers([...answers, selectedAnswer]);
+    setAnswers([...answers, selectedAnswer]); // This is async, but OK
   };
 
+  // --- handleNextQuestion: Handles Skip, Next, and See Results ---
   const handleNextQuestion = () => {
-    if (selectedAnswer === null && !showExplanation) {
-      setAnswers([...answers, -1]);
+    let newAnswers = [...answers];
+
+    if (showExplanation) {
+      // This is a 'Next' or 'See Results' click
+      // `answers` state is assumed to be up-to-date from handleSubmitAnswer
+      newAnswers = answers; 
+    } else if (selectedAnswer === null) {
+      // This is a SKIP (or timeout)
+      // `selectedAnswer` is null AND `showExplanation` is false
+      newAnswers.push(-1);
+      setAnswers(newAnswers); // Update state for this skip
     }
+    // If selectedAnswer is not null AND showExplanation is false, do nothing (user must hit submit)
 
     if (currentQuestion < validQuestions.length - 1) {
+      // Move to next question
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setTimeLeft(30);
       setShowExplanation(false);
     } else {
-      calculateResults();
+      // Last question, time to show results
+      calculateResults(newAnswers); // Pass the final array
     }
   };
 
-  const calculateResults = () => {
-    if (validQuestions.length === 0) {
-      onComplete(0);
-      setShowResults(true);
-      return;
-    }
-    
-    const finalAnswers = selectedAnswer !== null ? [...answers, selectedAnswer] : [...answers, -1];
-    const correctCount = finalAnswers.filter(
-      (answer, index) => answer === validQuestions[index].correctAnswer
-    ).length;
-    const score = Math.round((correctCount / validQuestions.length) * 100);
-    onComplete(score);
-    setShowResults(true);
-  };
-
-  const getScore = () => {
-    if (validQuestions.length === 0) return 0;
-    const correctCount = answers.filter(
-      (answer, index) => answer === validQuestions[index].correctAnswer
-    ).length;
-    return Math.round((correctCount / validQuestions.length) * 100);
-  };
+  // --- getScore removed ---
 
   if (showResults) {
-    const score = getScore();
-    const correctCount = answers.filter(
-      (answer, index) => validQuestions[index] && answer === validQuestions[index].correctAnswer
-    ).length;
+    // --- UPDATED: Use state variables ---
+    const score = finalScore;
+    const correctCount = finalCorrectCount;
+    // ---
     
-    // --- UPDATED XP Logic ---
     const isPass = score >= 70;
     const earnedXP = isPass ? xpReward : 0;
 
@@ -216,7 +234,9 @@ export const QuizModal = ({
       </Dialog>
     );
   }
-
+  
+  // ... (rest of the component is the same) ...
+  
   if (!currentQ) {
      return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -226,7 +246,6 @@ export const QuizModal = ({
           </DialogHeader>
           <div className="p-8 text-center">
             <p className="text-muted-foreground">Loading quiz questions...</p>
-            {/* Or show an error if questions array is empty after load */}
             {validQuestions.length === 0 && !currentQ && (
               <p className="text-destructive-foreground mt-2">
                 Failed to load questions for this quiz.
@@ -315,7 +334,7 @@ export const QuizModal = ({
             )}
           </div>
 
-          {/* Action Buttons */}
+          {/* --- UPDATED: Action Buttons --- */}
           <div className="flex gap-3">
             {!showExplanation ? (
               <>
@@ -327,7 +346,7 @@ export const QuizModal = ({
                   Submit Answer
                 </Button>
                 <Button
-                  onClick={handleNextQuestion}
+                  onClick={handleNextQuestion} // Acts as Skip
                   variant="outline"
                 >
                   Skip
@@ -335,7 +354,7 @@ export const QuizModal = ({
               </>
             ) : (
               <Button
-                onClick={handleNextQuestion}
+                onClick={handleNextQuestion} // Acts as Next/Results
                 className="flex-1"
               >
                 {currentQuestion < validQuestions.length - 1 ? 'Next Question' : 'See Results'}
