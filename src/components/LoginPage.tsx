@@ -79,7 +79,7 @@ const LoginPage = () => {
               <img 
                 src={cryptiqIllustration} 
                 alt="CryptIQ Learning Platform Illustration"
-                className="w-64 h-64 object-contain"
+                className="w-80 h-80 object-contain"
               />
             </div>
           </div>
