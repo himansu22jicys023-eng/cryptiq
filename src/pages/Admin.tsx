@@ -150,9 +150,11 @@ const Admin = () => {
       if (userData.error) throw new Error(userData.error.message);
       if (completionData.error) throw new Error(completionData.error.message);
       
-      setQuizzes(quizData.data as Quiz[]);
-      setUsers(userData.data as UserProfile[]);
+      // --- FIX: Ensure data is always an array ---
+      setQuizzes(quizData.data || []);
+      setUsers(userData.data || []);
       setRecentCompletions(completionData.data || []);
+      // --- End of FIX ---
 
     } catch (error: any) {
       toast({
@@ -160,6 +162,10 @@ const Admin = () => {
         description: error.message,
         variant: 'destructive',
       });
+      // Set to empty arrays on error to prevent .map crash
+      setQuizzes([]);
+      setUsers([]);
+      setRecentCompletions([]);
     } finally {
       setIsLoading(false);
     }
@@ -170,7 +176,7 @@ const Admin = () => {
     if (user && isAdmin) {
       fetchData();
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin]); // 'toast' dependency removed as it's a stable function from a hook
 
   // --- Auth & Loading Guards ---
   if (isAdminLoading) {
@@ -260,6 +266,12 @@ const Admin = () => {
                         <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
+                  ) : recentCompletions.length === 0 ? (
+                     <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        No completions yet.
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     recentCompletions.map((comp) => (
                       <TableRow key={comp.id}>
@@ -331,8 +343,19 @@ const QuizManagementTab = ({ quizzes, refetchQuizzes }: { quizzes: Quiz[], refet
       toast({ title: 'Error deleting questions', description: questionsError.message, variant: 'destructive' });
       return;
     }
+
+    // 2. Delete associated completions first
+    const { error: completionsError } = await supabase
+      .from('quiz_completions')
+      .delete()
+      .eq('quiz_id', selectedQuiz.id);
+
+    if (completionsError) {
+      toast({ title: 'Error deleting completions', description: completionsError.message, variant: 'destructive' });
+      return;
+    }
       
-    // 2. Delete the quiz itself
+    // 3. Delete the quiz itself
     const { error: quizError } = await supabase
       .from('quizzes')
       .delete()
@@ -341,7 +364,7 @@ const QuizManagementTab = ({ quizzes, refetchQuizzes }: { quizzes: Quiz[], refet
     if (quizError) {
       toast({ title: 'Error deleting quiz', description: quizError.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Quiz Deleted', description: 'The quiz and its questions were removed.' });
+      toast({ title: 'Quiz Deleted', description: 'The quiz, questions, and completions were removed.' });
       refetchQuizzes();
     }
     setIsAlertOpen(false);
@@ -373,23 +396,31 @@ const QuizManagementTab = ({ quizzes, refetchQuizzes }: { quizzes: Quiz[], refet
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quizzes.map((quiz) => (
-              <TableRow key={quiz.id}>
-                <TableCell>{quiz.title}</TableCell>
-                <TableCell><Badge>{quiz.difficulty}</Badge></TableCell>
-                <TableCell>{quiz.xp_reward}</TableCell>
-                <TableCell>{quiz.question_count}</TableCell>
-                <TableCell>{quiz.is_locked ? 'Yes' : 'No'}</TableCell>
-                <TableCell className="space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(quiz)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDelete(quiz)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+            {quizzes.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  No quizzes found. Add one!
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              quizzes.map((quiz) => ( // This was line 177
+                <TableRow key={quiz.id}>
+                  <TableCell>{quiz.title}</TableCell>
+                  <TableCell><Badge>{quiz.difficulty}</Badge></TableCell>
+                  <TableCell>{quiz.xp_reward}</TableCell>
+                  <TableCell>{quiz.question_count}</TableCell>
+                  <TableCell>{quiz.is_locked ? 'Yes' : 'No'}</TableCell>
+                  <TableCell className="space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(quiz)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(quiz)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </CardContent>
@@ -408,8 +439,8 @@ const QuizManagementTab = ({ quizzes, refetchQuizzes }: { quizzes: Quiz[], refet
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{selectedQuiz?.title}" and all its questions. 
-              This action cannot be undone.
+              This will permanently delete "{selectedQuiz?.title}" and all its questions
+              and user completions. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -669,6 +700,12 @@ const UserManagementTab = ({ users, isLoading }: { users: UserProfile[], isLoadi
               <TableRow>
                 <TableCell colSpan={6} className="text-center">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : users.length === 0 ? (
+               <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  No users found.
                 </TableCell>
               </TableRow>
             ) : (
