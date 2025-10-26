@@ -23,7 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Supabase & Auth
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth'; // Assumed auth hook
-import { useUserProgress } from '@/hooks/useUserProgress';
+import { useUserProgress } from '@/hooks/useUserProgress.tsx';
 
 // Solana
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
