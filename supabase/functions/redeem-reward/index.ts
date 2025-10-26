@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
+import { Connection } from "https://esm.sh/@solana/web3.js@1.95.8";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,9 +8,12 @@ const corsHeaders = {
 };
 
 // !!! IMPORTANT !!!
-// Replace with your project's treasury/vault wallet address
-const TREASURY_WALLET_ADDRESS = "YOUR_TREASURY_WALLET_PUBLIC_KEY_HERE";
-// Replace with your JIET token mint address
+// This is your project's treasury wallet.
+// This MUST match TREASURY_WALLET_ADDRESS in your Rewards.tsx
+// THIS MUST BE YOUR NEW, SAFE WALLET ADDRESS
+const TREASURY_WALLET_ADDRESS = Deno.env.get('TREASURY_WALLET_ADDRESS')!;
+
+// Your Public Token Mint Address
 const JIET_TOKEN_MINT = "mntS6ZetAcdw5dLFFtLw3UEX3BZW5RkDPamSpEmpSbP";
 
 serve(async (req) => {
@@ -23,6 +26,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+    
+    if (!TREASURY_WALLET_ADDRESS) {
+      throw new Error("TREASURY_WALLET_ADDRESS is not set in environment secrets");
+    }
 
     // Get user
     const authHeader = req.headers.get('Authorization')!;
@@ -31,9 +38,9 @@ serve(async (req) => {
     if (userError || !user) throw new Error('Unauthorized');
 
     // Parse request
-    const { rewardId, transactionSignature } = await req.json();
-    if (!rewardId || !transactionSignature) {
-      throw new Error('Missing rewardId or transactionSignature');
+    const { rewardId, transactionSignature, userWalletAddress } = await req.json();
+    if (!rewardId || !transactionSignature || !userWalletAddress) {
+      throw new Error('Missing rewardId, transactionSignature, or userWalletAddress');
     }
 
     // 1. Get the reward details from DB to know the cost
@@ -44,7 +51,7 @@ serve(async (req) => {
       .single();
     if (rewardError || !reward) throw new Error('Reward not found');
     
-    const expectedAmount = reward.cost;
+    const expectedCost = Number(reward.cost);
 
     // 2. Verify the Solana transaction
     const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
@@ -53,25 +60,33 @@ serve(async (req) => {
     });
     if (!tx) throw new Error('Transaction not found');
 
-    // 3. Find the token transfer instruction
-    const tokenTransfers = tx.meta.innerInstructions
-      .flatMap((i) => i.instructions)
-      .filter((i) => (i.parsed?.type === 'transfer' && i.program === 'spl-token'));
+    // 3. Find the transfer instruction in the transaction
+    let transferVerified = false;
+    const instructions = tx.transaction.message.instructions;
     
-    const transfer = tokenTransfers.find(t => 
-      t.parsed.info.destination === TREASURY_WALLET_ADDRESS &&
-      t.parsed.info.source === user.walletAddress // !! Assumes user's wallet is stored
-      // You might need to pass the user's walletAddress from the client
+    // Check pre/post token balances for the transfer
+    const preBalance = tx.meta?.preTokenBalances?.find(b => 
+      b.mint === JIET_TOKEN_MINT && b.owner === userWalletAddress
+    );
+    const postBalance = tx.meta?.postTokenBalances?.find(b => 
+      b.mint === JIET_TOKEN_MINT && b.owner === userWalletAddress
     );
     
-    // A more robust check: find the correct transfer in postTokenBalances
-    const preBalance = tx.meta.preTokenBalances.find(b => b.mint === JIET_TOKEN_MINT && b.owner === user.walletAddress);
-    const postBalance = tx.meta.postTokenBalances.find(b => b.mint === JIET_TOKEN_MINT && b.owner === user.walletAddress);
+    if (!preBalance || !postBalance) {
+      throw new Error("Could not verify token balances for this transaction.");
+    }
     
     const amountTransferred = (preBalance.uiTokenAmount.uiAmount || 0) - (postBalance.uiTokenAmount.uiAmount || 0);
 
-    if (amountTransferred < expectedAmount) {
-      throw new Error(`Transaction amount (${amountTransferred}) was less than expected (${expectedAmount})`);
+    // Check if the treasury wallet received the funds
+    const treasuryBalance = tx.meta?.postTokenBalances?.find(b => 
+      b.mint === JIET_TOKEN_MINT && b.owner === TREASURY_WALLET_ADDRESS
+    );
+    
+    if (amountTransferred >= expectedCost && treasuryBalance) {
+        transferVerified = true;
+    } else {
+        throw new Error(`Transaction verification failed. Expected ${expectedCost} JIET, found ${amountTransferred}`);
     }
 
     // 4. Record the redemption in the database
@@ -80,7 +95,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         reward_id: rewardId,
-        cost_paid: expectedAmount,
+        cost_paid: expectedCost,
         transaction_signature: transactionSignature
       });
 
